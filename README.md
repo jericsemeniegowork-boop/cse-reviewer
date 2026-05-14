@@ -99,7 +99,6 @@ Dedicated to **Tunet**.
 
 ## Project Structure
 
-```txt
 index.html   main page
 style.css    design and layout
 data.js      questions, formulas, topics, and reviewer data
