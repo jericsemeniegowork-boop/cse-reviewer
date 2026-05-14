@@ -62,6 +62,7 @@ function saveStats(s){save("stats",s)}
 function weakIds(){return load("weakIds",[])}
 function setWeakIds(ids){save("weakIds",[...new Set(ids)])}
 function h(s){return String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function renderVisual(q){return q && q.visual ? `<div class="questionVisual">${q.visual}</div>` : ""}
 function shuffle(a){return [...a].sort(()=>Math.random()-0.5)}
 
 function hashSeed(str){
@@ -200,7 +201,7 @@ function renderDashboard(){
     ${card(`<div class="profileCard">
       <span class="pill premium-pill">Review Studio</span>
       <h2 style="margin-top:14px">${p.name?`Welcome back, ${h(p.name)}.`:"Welcome to your review space."}</h2>
-      <p class="muted">${h(coachLine())}</p><p class="small muted">Question bank: ${QUESTIONS.length} items • balanced randomizer avoids recent repeats.</p>
+      <p class="muted">${h(coachLine())}</p><p class="small muted">Question bank: ${QUESTIONS.length} items • deep coverage drills • balanced randomizer avoids repeats.</p>
       <div style="height:14px"></div>
       <div class="miniActions">
         <button class="btn" onclick="recommendedStart()">Start Suggested Drill</button>
@@ -216,7 +217,7 @@ function renderDashboard(){
     </div>
     ${card(`<h3>Today’s Goal</h3><div class="progressBarLite"><div style="width:${goalPct}%"></div></div><p class="muted">${daily} of ${p.dailyGoal} questions completed today.</p><div class="streakRow">${streakDays().map(x=>`<div class="streakDot ${x.done?"done":""}">${x.label}</div>`).join("")}</div>`)}
     ${card(`<h3>Suggested Focus Areas</h3><div class="grid3">${weak.map(id=>{const t=topicById(id);return `<div class="recommendation"><span class="pill">${t.icon} ${t.name}</span><p class="muted">${t.focus}</p><button class="btn full" onclick="startTopicDrill('${id}')">Drill ${t.name}</button></div>`}).join("")}</div>`)}
-    ${card(`<h3>Quick Access</h3><div class="grid3"><button class="btn secondary" onclick="startQuickSprint()">⚡ 10-item Sprint</button><button class="btn secondary" onclick="startCaseletDrill()">📄 Caselet Drill</button><button class="btn secondary" onclick="setTab('progress')">📈 View Progress</button></div>`)}
+    ${card(`<h3>Quick Access</h3><div class="grid3"><button class="btn secondary" onclick="startQuickSprint()">⚡ 10-item Sprint</button><button class="btn secondary" onclick="startCaseletDrill()">📄 Caselet Drill</button><button class="btn secondary" onclick="startGraphicDrill()">📊 Graphic Drill</button><button class="btn secondary" onclick="setTab('progress')">📈 View Progress</button></div>`)}
     ${card(DEDICATION_FOOTER, "dedicationFooter small muted")}
   </div>`;
 }
@@ -277,6 +278,39 @@ function startSectionDrill(){
   const pool=balancedPick(QUESTIONS.filter(q=>q.topic===t),20,{mode:"section-"+t});
   state.quizMode=`Section Drill: ${topicById(t).name}`; state.quizStarted=true; state.quizPool=pool; state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[]; renderQuiz();
 }
+
+
+function startFocusedDrill(label, matcher, count=30){
+  let pool=QUESTIONS.filter(q=>{
+    const tags=q.modeTags||[];
+    const hay=[q.topic,q.subtopic,q.difficulty,...tags].join(" ").toLowerCase();
+    return matcher.some(m=>hay.includes(String(m).toLowerCase()));
+  });
+  if(!pool.length) pool=QUESTIONS;
+  state.quizMode=label;
+  state.quizStarted=true;
+  state.quizPool=balancedPick(pool, Math.min(count,pool.length), {mode:label});
+  state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[];
+  setTabNoReset("activities");
+  renderQuiz();
+}
+function startMathDrill(){startFocusedDrill("Math Drill",["math","numerical","sufficiency"],30)}
+function startGrammarDrill(){startFocusedDrill("Grammar Drill",["grammar","Correct Usage","Error Recognition","Spelling","Prepositions","Articles"],30)}
+function startFilipinoDrill(){startFocusedDrill("Filipino Drill",["filipino"],30)}
+function startLawDrill(){startFocusedDrill("Constitution / Law Drill",["constitution","law","RA 6713","Human Rights","Environment"],30)}
+function startLogicDrill(){startFocusedDrill("Logic and Analogy Drill",["logic","analytical","abstract"],30)}
+function startClericalDrill(){startFocusedDrill("Clerical Drill",["clerical","Alphabetizing","Detail Checking"],25)}
+function startReadingDrill(){startFocusedDrill("Reading and Paragraph Drill",["reading","Reading Comprehension","Paragraph Organization"],25)}
+
+function startGraphicDrill(){
+  const gfx=QUESTIONS.filter(q=>q.visual);
+  const pool=balancedPick(gfx, Math.min(25,gfx.length), {mode:"graphic"});
+  state.quizMode="Graphic/Data Drill";
+  state.quizStarted=true; state.quizPool=pool; state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[];
+  setTabNoReset("activities");
+  renderQuiz();
+}
+
 function startCaseletDrill(){
   let pool=balancedPick(QUESTIONS.filter(q=>q.subtopic && q.subtopic.toLowerCase().includes("caselet")),25,{mode:"caselet"});
   if(!pool.length) pool=balancedPick(QUESTIONS,25,{mode:"caselet-fallback"});
@@ -293,10 +327,20 @@ function renderActivities(){
   ${card(`<div class="modeCard"><h2>📝 Professional Full Mock</h2><p class="muted">170-item simulation: 20 EDQ + 150 scored practice items. Timer: 3h 10m.</p><button class="btn full" onclick="startFullMock('professional')">Start Professional Full Mock</button></div>`)}
   ${card(`<div class="modeCard"><h2>🗂️ SubProfessional Full Mock</h2><p class="muted">165-item simulation: 20 EDQ + 145 scored practice items. Timer: 2h 40m.</p><button class="btn full" onclick="startFullMock('subprofessional')">Start SubProfessional Full Mock</button></div>`)}
   </div>
+  ${card(`<h2>Focused Drills</h2><p class="muted">Fast access to high-yield coverage areas.</p><div class="grid3">
+    <button class="btn secondary" onclick="startMathDrill()">Math Drill</button>
+    <button class="btn secondary" onclick="startGrammarDrill()">Grammar Drill</button>
+    <button class="btn secondary" onclick="startFilipinoDrill()">Filipino Drill</button>
+    <button class="btn secondary" onclick="startLawDrill()">Constitution / Law Drill</button>
+    <button class="btn secondary" onclick="startLogicDrill()">Logic / Analogy Drill</button>
+    <button class="btn secondary" onclick="startClericalDrill()">Clerical Drill</button>
+    <button class="btn secondary" onclick="startReadingDrill()">Reading / Paragraph Drill</button>
+    <button class="btn secondary" onclick="startGraphicDrill()">Graphic / Data Drill</button>
+  </div>`)}
   ${card(`<h2>⚡ Activity Hub</h2><div class="grid2">
     <button class="btn secondary" onclick="startQuickSprint()">Quick Sprint 10</button>
     <button class="btn secondary" onclick="startDiagnostic()">Diagnostic 45</button>
-    <button class="btn secondary" onclick="startCaseletDrill()">Caselet Drill 25</button>
+    <button class="btn secondary" onclick="startCaseletDrill()">Caselet Drill 25</button><button class="btn secondary" onclick="startGraphicDrill()">Graphic/Data Drill</button>
     <button class="btn secondary" onclick="startWeakQuiz()">Weak Spot Practice</button>
   </div>`)}
   ${card(`<h2>🎯 Section Drill</h2><p class="muted">Pick one section and answer 20 targeted questions.</p><div class="selectRow"><select onchange="state.sectionTopic=this.value">${TOPICS.map(t=>`<option value="${t.id}" ${state.sectionTopic===t.id?"selected":""}>${t.icon} ${t.name} (${topicCount(t.id)})</option>`).join("")}</select><button class="btn" onclick="startSectionDrill()">Start Section Drill</button></div>`)}
@@ -333,7 +377,7 @@ function renderQuiz(){
     <button class="btn secondary exitActivityBtn" onclick="quitActivity()">Exit</button>
   </div>
   <div class="quizTop"><div class="statBox"><span>Mode</span><strong>${state.quizMode.replace(" Full Mock","")}</strong></div><div class="statBox"><span>Score</span><strong>${state.score}/${state.answered}</strong></div><div class="statBox"><span>Timer</span><strong class="timer" id="timerBox">${state.timerEnd?"--:--":"—"}</strong></div><div class="statBox"><span>Left</span><strong>${pool.length-state.quizIndex}</strong></div></div>
-  <div class="card"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic||q.section}`}</span><h2 style="margin-top:14px">Item ${state.quizIndex+1} of ${pool.length}</h2><div class="progress"><div style="width:${((state.quizIndex+1)/pool.length)*100}%"></div></div><h3>${h(q.q)}</h3><div class="choices">${q.choices.map((c,i)=>`<button class="choice ${answered&&i===q.answer?'correct':''} ${answered&&i===state.chosen&&i!==q.answer?'wrong':''}" ${answered?'disabled':''} onclick="chooseAnswer(${i})"><span class="letter">${String.fromCharCode(65+i)}</span><span>${h(c)}</span></button>`).join("")}</div>
+  <div class="card"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic||q.section}`}</span><h2 style="margin-top:14px">Item ${state.quizIndex+1} of ${pool.length}</h2><div class="progress"><div style="width:${((state.quizIndex+1)/pool.length)*100}%"></div></div><h3>${h(q.q)}</h3>${renderVisual(q)}<div class="choices">${q.choices.map((c,i)=>`<button class="choice ${answered&&i===q.answer?'correct':''} ${answered&&i===state.chosen&&i!==q.answer?'wrong':''}" ${answered?'disabled':''} onclick="chooseAnswer(${i})"><span class="letter">${String.fromCharCode(65+i)}</span><span>${h(c)}</span></button>`).join("")}</div>
   ${answered&&!state.quizMode.includes("Full Mock")&&state.quizMode!=="Diagnostic"?`<div class="answerBox ${correct?'good':'bad'}"><h3>${correct?'✅ Correct':'❌ Corrected'}</h3>${!correct?`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p>`:''}<div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div><div style="height:12px"></div><button class="btn full" onclick="nextQuestion()">${state.quizIndex>=pool.length-1?'Finish':'Next Question'} →</button></div>`:""}
   </div></div>`;
   updateTimer();
@@ -354,13 +398,13 @@ function renderFinished(timeExpired=false){
 }
 function reviewResults(){
   app.innerHTML=`<div class="section">${card(`<h2>Answer Review</h2><p class="muted">Correct answer, shortcut, and explanation for every scored item. EDQ items are non-scored.</p><button class="btn secondary" onclick="renderFinished()">Back to score</button>`)}
-  ${state.responses.map((r,i)=>{const q=questionById(r.id), t=topicById(q.topic); if(!q)return ""; return `<div class="reviewItem"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic} • ${q.difficulty}`}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3><p><b>Your answer:</b> ${r.chosen==null?'No answer':String.fromCharCode(65+r.chosen)+'. '+h(q.choices[r.chosen])}</p>${q.kind==="edq"?`<p class="muted">EDQ item — no correct or incorrect answer.</p>`:`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div>`}</div>`}).join("")}</div>`;
+  ${state.responses.map((r,i)=>{const q=questionById(r.id), t=topicById(q.topic); if(!q)return ""; return `<div class="reviewItem"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic} • ${q.difficulty}`}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3>${renderVisual(q)}<p><b>Your answer:</b> ${r.chosen==null?'No answer':String.fromCharCode(65+r.chosen)+'. '+h(q.choices[r.chosen])}</p>${q.kind==="edq"?`<p class="muted">EDQ item — no correct or incorrect answer.</p>`:`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div>`}</div>`}).join("")}</div>`;
 }
 function renderWeak(){
   const weakQs=weakIds().map(questionById).filter(Boolean);
   if(!weakQs.length){app.innerHTML=card(`<h2>🧠 Weak Spot Bank</h2><p class="muted">No weak spots yet. Missed scored questions will appear here.</p><button class="btn" onclick="setTab('practice')">Start Practice</button>`);return}
   app.innerHTML=`<div class="section">${card(`<h2>🧠 Weak Spot Bank</h2><p class="muted">${weakQs.length} saved weak questions.</p><div class="grid2"><button class="btn" onclick="startWeakQuiz()">Practice Weak Spots</button><button class="btn danger" onclick="clearWeak()">Clear Weak Spots</button></div>`)}
-  ${weakQs.map((q,i)=>`<div class="reviewItem"><span class="pill">${topicById(q.topic).icon} ${topicById(q.topic).name} • ${q.subtopic}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3><p><b>Answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div></div>`).join("")}</div>`;
+  ${weakQs.map((q,i)=>`<div class="reviewItem"><span class="pill">${topicById(q.topic).icon} ${topicById(q.topic).name} • ${q.subtopic}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3>${renderVisual(q)}<p><b>Answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div></div>`).join("")}</div>`;
 }
 function startWeakQuiz(){const qs=balancedPool(weakIds().map(questionById).filter(Boolean),{mode:"weak"});if(!qs.length)return renderWeak();state.quizStarted=true;state.quizMode="Weak Practice";state.quizPool=qs;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];setTabNoReset("practice");renderQuiz()}
 function renderProgress(){
@@ -368,6 +412,7 @@ function renderProgress(){
   app.innerHTML=`<div class="section">
     ${card(`<h2>📈 Progress Report</h2><p class="muted">Your activity is saved locally in this browser.</p><div class="kpiGrid"><div class="kpi"><span>Total Answered</span><strong>${s.answered||0}</strong></div><div class="kpi"><span>Total Accuracy</span><strong>${acc}%</strong></div><div class="kpi"><span>Weak Saved</span><strong>${weakIds().length}</strong></div><div class="kpi"><span>Target</span><strong>${p.targetScore}%</strong></div></div>`)}
     ${card(`<h3>Topic Accuracy</h3><div class="topicProgress">${TOPICS.map(t=>{const a=topicAccuracy(t.id);const answered=((s.byTopic||{})[t.id]||{}).answered||0;return `<div class="topicProgressItem"><div style="display:flex;justify-content:space-between;gap:10px"><b>${t.icon} ${t.name}</b><span class="muted">${answered} answered • ${a}%</span></div><div class="progressBarLite"><div style="width:${a}%"></div></div></div>`}).join("")}</div>`)}
+    ${card(`<h3>Coverage Matrix</h3><p class="muted">Topic areas used to build the practice bank.</p><div class="coverageGrid">${Object.entries(window.CSE_DATA.coverageMap||{}).map(([k,v])=>`<div class="coverageBox"><b>${k}</b><span>${v.length} areas</span><p>${v.join(", ")}</p></div>`).join("")}</div>`)}
     ${card(`<h3>Last Mock</h3>${last?`<p><b>${h(last.mode)}</b></p><p>Score: <b>${last.score}/${last.total}</b> (${last.pct}%)</p><p class="muted">${new Date(last.date).toLocaleString()}</p>`:`<p class="muted">No mock completed yet.</p>`}<div class="grid2"><button class="btn" onclick="setTab('activities')">Take Mock</button><button class="btn secondary" onclick="exportProgress()">Export Progress JSON</button></div>`)}
   </div>`;
 }
@@ -437,5 +482,5 @@ function render(){
   if(state.tab==="progress")renderProgress();
   if(state.tab==="settings")renderSettings();
 }
-window.quitActivity=quitActivity;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
+window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
 const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"dark";document.documentElement.dataset.theme=savedTheme;themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();
