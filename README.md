@@ -8,7 +8,7 @@ Dedicated to **Tunet**.
 
 ## Live Preview
 
-(https://cse-reviewer-cyan.vercel.app/)
+`your-vercel-link-here`
 
 ## Highlights
 
@@ -22,8 +22,15 @@ Dedicated to **Tunet**.
 - Dark mode
 - Mobile-friendly layout
 - Focus mode during quizzes and mock exams
+- Balanced randomizer for cleaner question variety
 
 ## Version Notes
+
+### v10
+- Improved the question randomizer
+- Balanced question selection by topic, subtopic, and difficulty
+- Added recent-repeat avoidance using browser storage
+- Improved random selection for practice, drills, diagnostics, sprints, mocks, and weak spot review
 
 ### v9
 - Added focused activity mode for quizzes, drills, diagnostics, and mocks
@@ -32,22 +39,23 @@ Dedicated to **Tunet**.
 
 ### v8
 - Improved the overall reviewer feel and wording
-- Added more serious practice questions across laws, grammar, math, logic, and Filipino
+- Added more practice questions across laws, grammar, math, logic, and Filipino
 - Expanded formula cards
-
-### v7
-- Added settings, progress tracking, weak-topic preferences, and dashboard personalization
+- Added Tunet dedication
 
 ## Built With
+
 - HTML
 - CSS
 - JavaScript
 - LocalStorage
 
 ## Project Structure
+
+```txt
 index.html   main page
 style.css    design and layout
 data.js      questions, formulas, and reviewer data
-app.js       quiz logic, scoring, settings, and progress
+app.js       quiz logic, scoring, settings, progress, and randomizer
 vercel.json  Vercel routing
 README.md    project documentation
