@@ -204,7 +204,7 @@ function renderDashboard(){
       <p class="muted">${h(coachLine())}</p><p class="small muted">Question bank: ${QUESTIONS.length} items • deep coverage drills • balanced randomizer avoids repeats.</p>
       <div style="height:14px"></div>
       <div class="miniActions">
-        <button class="btn" onclick="recommendedStart()">Start Suggested Drill</button>
+        <button class="btn" onclick="recommendedStart()">Start Drill</button>
         <button class="btn secondary" onclick="setTab('activities')">Take Full Mock</button>
         <button class="btn secondary" onclick="setTab('settings')">${p.name?"Edit Settings":"Set Up Profile"}</button>
       </div>
@@ -216,7 +216,7 @@ function renderDashboard(){
       <div class="kpi"><span>Today</span><strong>${daily}/${p.dailyGoal}</strong></div>
     </div>
     ${card(`<h3>Today’s Goal</h3><div class="progressBarLite"><div style="width:${goalPct}%"></div></div><p class="muted">${daily} of ${p.dailyGoal} questions completed today.</p><div class="streakRow">${streakDays().map(x=>`<div class="streakDot ${x.done?"done":""}">${x.label}</div>`).join("")}</div>`)}
-    ${card(`<h3>Suggested Focus Areas</h3><div class="grid3">${weak.map(id=>{const t=topicById(id);return `<div class="recommendation"><span class="pill">${t.icon} ${t.name}</span><p class="muted">${t.focus}</p><button class="btn full" onclick="startTopicDrill('${id}')">Drill ${t.name}</button></div>`}).join("")}</div>`)}
+    ${card(`<h3>Suggested Focus</h3><div class="grid3">${weak.map(id=>{const t=topicById(id);return `<div class="recommendation"><span class="pill">${t.icon} ${t.name}</span><p class="muted">${t.focus}</p><button class="btn full" onclick="startTopicDrill('${id}')">Start Drill</button></div>`}).join("")}</div>`)}
     ${card(`<h3>Quick Access</h3><div class="grid3"><button class="btn secondary" onclick="startQuickSprint()">⚡ 10-item Sprint</button><button class="btn secondary" onclick="startCaseletDrill()">📄 Caselet Drill</button><button class="btn secondary" onclick="startGraphicDrill()">📊 Graphic Drill</button><button class="btn secondary" onclick="setTab('progress')">📈 View Progress</button></div>`)}
     ${card(DEDICATION_FOOTER, "dedicationFooter small muted")}
   </div>`;
@@ -483,4 +483,4 @@ function render(){
   if(state.tab==="settings")renderSettings();
 }
 window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
-const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"dark";document.documentElement.dataset.theme=savedTheme;themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();
+const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"light";document.documentElement.dataset.theme=savedTheme;themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();
