@@ -63,6 +63,60 @@ function weakIds(){return load("weakIds",[])}
 function setWeakIds(ids){save("weakIds",[...new Set(ids)])}
 function h(s){return String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
 function shuffle(a){return [...a].sort(()=>Math.random()-0.5)}
+
+function hashSeed(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h+= (h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}
+  return Math.abs(h>>>0);
+}
+function seededShuffle(arr, seed){
+  let a=[...arr], s=seed || Date.now();
+  function rnd(){s=(s*1664525+1013904223)>>>0;return s/4294967296;}
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function recentQuestionIds(){
+  return load("recentQuestionIds",[]);
+}
+function rememberQuestionIds(ids){
+  const recent=[...ids,...recentQuestionIds()].slice(0,300);
+  save("recentQuestionIds",[...new Set(recent)]);
+}
+function balancedPick(pool, count, opts={}){
+  const recent=new Set(recentQuestionIds());
+  let fresh=pool.filter(q=>!recent.has(q.id));
+  if(fresh.length < Math.min(count, Math.floor(pool.length*0.45))) fresh=pool;
+  const seed=hashSeed(`${new Date().toISOString().slice(0,10)}-${opts.mode||"mix"}-${Math.random()}`);
+  let groups={};
+  fresh.forEach(q=>{
+    const key=[q.topic||"x",q.subtopic||"x",q.difficulty||"x"].join("|");
+    (groups[key] ||= []).push(q);
+  });
+  let buckets=Object.values(groups).map(g=>seededShuffle(g, seed + g.length));
+  let picked=[];
+  let safety=0;
+  while(picked.length<count && buckets.length && safety<10000){
+    safety++;
+    buckets=seededShuffle(buckets.filter(b=>b.length), seed + safety);
+    for(const b of buckets){
+      if(picked.length>=count) break;
+      const q=b.shift();
+      if(q && !picked.some(x=>x.id===q.id)) picked.push(q);
+    }
+  }
+  if(picked.length<count){
+    for(const q of seededShuffle(pool, seed+999)){
+      if(picked.length>=count) break;
+      if(!picked.some(x=>x.id===q.id)) picked.push(q);
+    }
+  }
+  rememberQuestionIds(picked.map(q=>q.id));
+  return picked.slice(0,count);
+}
+function balancedPool(pool, opts={}){
+  return balancedPick(pool, pool.length, opts);
+}
+
 function topicById(id){return TOPICS.find(t=>t.id===id)||{id:"edq",name:"EDQ",icon:"📝",focus:"Examinee descriptive questions",color:"linear-gradient(135deg,#64748b,#334155)"}}
 function questionById(id){return QUESTIONS.find(q=>q.id===id)||EDQ.find(q=>q.id===id)}
 function card(x,cls=""){return `<div class="card ${cls}">${x}</div>`}
@@ -146,7 +200,7 @@ function renderDashboard(){
     ${card(`<div class="profileCard">
       <span class="pill premium-pill">Review Studio</span>
       <h2 style="margin-top:14px">${p.name?`Welcome back, ${h(p.name)}.`:"Welcome to your review space."}</h2>
-      <p class="muted">${h(coachLine())}</p>
+      <p class="muted">${h(coachLine())}</p><p class="small muted">Question bank: ${QUESTIONS.length} items • balanced randomizer avoids recent repeats.</p>
       <div style="height:14px"></div>
       <div class="miniActions">
         <button class="btn" onclick="recommendedStart()">Start Suggested Drill</button>
@@ -169,7 +223,7 @@ function renderDashboard(){
 function recommendedStart(){const ids=weakestTopicIds();startTopicDrill(ids[0]||"numerical")}
 function startTopicDrill(topicId){
   state.sectionTopic=topicId;
-  const pool=shuffle(QUESTIONS.filter(q=>q.topic===topicId)).slice(0,20);
+  const pool=balancedPick(QUESTIONS.filter(q=>q.topic===topicId),20,{mode:"topic-"+topicId});
   state.quizMode=`Focused Drill: ${topicById(topicId).name}`;
   state.quizStarted=true; state.quizPool=pool; state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[]; setTabNoReset("practice"); renderQuiz();
 }
@@ -195,7 +249,7 @@ function toggleAllTopics(){state.selectedTopics=state.selectedTopics.length===TO
 function toggleTopic(id){state.selectedTopics=state.selectedTopics.includes(id)?state.selectedTopics.filter(x=>x!==id):[...state.selectedTopics,id];render()}
 function filteredQuestions(){return QUESTIONS.filter(q=>state.selectedTopics.includes(q.topic)&&(!state.difficulty||q.difficulty===state.difficulty))}
 function resetQuizState(full=true){stopTimer();exitFocusMode();state.quizStarted=false;state.quizPool=[];state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];if(full)render()}
-function startPractice(){let pool=shuffle(filteredQuestions());state.quizMode="practice";state.quizStarted=true;state.quizPool=pool;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];renderQuiz()}
+function startPractice(){let pool=balancedPool(filteredQuestions(),{mode:"practice"});state.quizMode="practice";state.quizStarted=true;state.quizPool=pool;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];renderQuiz()}
 function renderPractice(){
   if(state.quizStarted) return renderQuiz();
   app.innerHTML=`<div class="section">${renderTopicPicker()}${card(`<h2>🎯 Practice Mode</h2><p class="muted">Instant correction after every answer. Best for learning and topic drilling.</p><p><b>${filteredQuestions().length}</b> available questions.</p><button class="btn full" onclick="startPractice()">Start Practice</button>`)}</div>`;
@@ -203,7 +257,7 @@ function renderPractice(){
 function sampleFromTopics(topicIds,count,caseletOnly=false){
   let pool=QUESTIONS.filter(q=>topicIds.includes(q.topic));
   if(caseletOnly) pool=pool.filter(q=>q.subtopic && q.subtopic.toLowerCase().includes("caselet"));
-  let chosen=shuffle(pool).slice(0,count);
+  let chosen=balancedPick(pool,count,{mode:"sample"});
   if(chosen.length<count && pool.length){let extra=shuffle(pool);while(chosen.length<count){chosen.push(extra[chosen.length%extra.length])}}
   return chosen;
 }
@@ -220,16 +274,16 @@ function startFullMock(type){
 }
 function startSectionDrill(){
   const t=state.sectionTopic;
-  const pool=shuffle(QUESTIONS.filter(q=>q.topic===t)).slice(0,20);
+  const pool=balancedPick(QUESTIONS.filter(q=>q.topic===t),20,{mode:"section-"+t});
   state.quizMode=`Section Drill: ${topicById(t).name}`; state.quizStarted=true; state.quizPool=pool; state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[]; renderQuiz();
 }
 function startCaseletDrill(){
-  let pool=shuffle(QUESTIONS.filter(q=>q.subtopic && q.subtopic.toLowerCase().includes("caselet"))).slice(0,25);
-  if(!pool.length) pool=shuffle(QUESTIONS).slice(0,25);
+  let pool=balancedPick(QUESTIONS.filter(q=>q.subtopic && q.subtopic.toLowerCase().includes("caselet")),25,{mode:"caselet"});
+  if(!pool.length) pool=balancedPick(QUESTIONS,25,{mode:"caselet-fallback"});
   state.quizMode="Caselet Drill"; state.quizStarted=true; state.quizPool=pool; state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[]; renderQuiz();
 }
-function startQuickSprint(){state.quizMode="Quick Sprint";state.quizStarted=true;state.quizPool=shuffle(QUESTIONS).slice(0,10);state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];setTabNoReset("activities");renderQuiz();startTimer(10*60,"Quick Sprint")}
-function startDiagnostic(){let picked=[];TOPICS.forEach(t=>{picked.push(...shuffle(QUESTIONS.filter(q=>q.topic===t.id)).slice(0,5))});state.quizMode="Diagnostic";state.quizStarted=true;state.quizPool=shuffle(picked);state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];renderQuiz()}
+function startQuickSprint(){state.quizMode="Quick Sprint";state.quizStarted=true;state.quizPool=balancedPick(QUESTIONS,10,{mode:"sprint"});state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];setTabNoReset("activities");renderQuiz();startTimer(10*60,"Quick Sprint")}
+function startDiagnostic(){let picked=[];TOPICS.forEach(t=>{picked.push(...balancedPick(QUESTIONS.filter(q=>q.topic===t.id),5,{mode:"diagnostic-"+t.id}))});state.quizMode="Diagnostic";state.quizStarted=true;state.quizPool=balancedPool(picked,{mode:"diagnostic"});state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];renderQuiz()}
 function renderActivities(){
   if(state.quizStarted) return renderQuiz();
   const p=profile();
@@ -308,7 +362,7 @@ function renderWeak(){
   app.innerHTML=`<div class="section">${card(`<h2>🧠 Weak Spot Bank</h2><p class="muted">${weakQs.length} saved weak questions.</p><div class="grid2"><button class="btn" onclick="startWeakQuiz()">Practice Weak Spots</button><button class="btn danger" onclick="clearWeak()">Clear Weak Spots</button></div>`)}
   ${weakQs.map((q,i)=>`<div class="reviewItem"><span class="pill">${topicById(q.topic).icon} ${topicById(q.topic).name} • ${q.subtopic}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3><p><b>Answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div></div>`).join("")}</div>`;
 }
-function startWeakQuiz(){const qs=shuffle(weakIds().map(questionById).filter(Boolean));if(!qs.length)return renderWeak();state.quizStarted=true;state.quizMode="Weak Practice";state.quizPool=qs;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];setTabNoReset("practice");renderQuiz()}
+function startWeakQuiz(){const qs=balancedPool(weakIds().map(questionById).filter(Boolean),{mode:"weak"});if(!qs.length)return renderWeak();state.quizStarted=true;state.quizMode="Weak Practice";state.quizPool=qs;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];setTabNoReset("practice");renderQuiz()}
 function renderProgress(){
   const s=stats(); const acc=accuracy(); const p=profile(); const last=s.lastMock;
   app.innerHTML=`<div class="section">

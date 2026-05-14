@@ -750,3 +750,8 @@ body.activityFocus .progress{
     padding-right:12px;
   }
 }
+
+/* v10 Randomizer polish */
+.profileCard .small.muted{
+  margin-top:8px;
+}
