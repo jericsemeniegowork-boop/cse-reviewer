@@ -39,6 +39,19 @@ let timerInterval = null;
 
 const app=document.getElementById("app"), desktopTabs=document.getElementById("desktopTabs"), mobileTabs=document.getElementById("mobileTabs");
 
+function enterFocusMode(){
+  document.body.classList.add("activityFocus");
+}
+function exitFocusMode(){
+  document.body.classList.remove("activityFocus");
+}
+function quitActivity(){
+  if(confirm("Exit this activity? Your current activity progress will be cleared.")){
+    resetQuizState(true);
+    setTab("dashboard");
+  }
+}
+
 function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function load(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -181,7 +194,7 @@ function renderTopicPicker(){
 function toggleAllTopics(){state.selectedTopics=state.selectedTopics.length===TOPICS.length?[]:TOPICS.map(t=>t.id);render()}
 function toggleTopic(id){state.selectedTopics=state.selectedTopics.includes(id)?state.selectedTopics.filter(x=>x!==id):[...state.selectedTopics,id];render()}
 function filteredQuestions(){return QUESTIONS.filter(q=>state.selectedTopics.includes(q.topic)&&(!state.difficulty||q.difficulty===state.difficulty))}
-function resetQuizState(full=true){stopTimer();state.quizStarted=false;state.quizPool=[];state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];if(full)render()}
+function resetQuizState(full=true){stopTimer();exitFocusMode();state.quizStarted=false;state.quizPool=[];state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];if(full)render()}
 function startPractice(){let pool=shuffle(filteredQuestions());state.quizMode="practice";state.quizStarted=true;state.quizPool=pool;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];renderQuiz()}
 function renderPractice(){
   if(state.quizStarted) return renderQuiz();
@@ -253,10 +266,19 @@ function nextQuestion(){
 function addWeak(id){setWeakIds([...weakIds(),id])}
 function clearWeak(){setWeakIds([]);renderWeak()}
 function renderQuiz(){
+  enterFocusMode();
   const pool=state.quizPool;if(!pool.length){app.innerHTML=card(`<h2>No questions found</h2><button class="btn" onclick="resetQuizState()">Back</button>`);return}
   const q=pool[state.quizIndex], t=topicById(q.topic), answered=state.chosen!==null, correct=q.kind==="edq"||state.chosen===q.answer;
   const scoredTotal=pool.filter(x=>x.kind!=="edq").length;
-  app.innerHTML=`<div><div class="quizTop"><div class="statBox"><span>Mode</span><strong>${state.quizMode.replace(" Full Mock","")}</strong></div><div class="statBox"><span>Score</span><strong>${state.score}/${state.answered}</strong></div><div class="statBox"><span>Timer</span><strong class="timer" id="timerBox">${state.timerEnd?"--:--":"—"}</strong></div><div class="statBox"><span>Left</span><strong>${pool.length-state.quizIndex}</strong></div></div>
+  app.innerHTML=`<div class="activityShell">
+  <div class="activityHeader">
+    <div>
+      <span class="pill">Focused Activity</span>
+      <h2>${state.quizMode.replace(" Full Mock","")}</h2>
+    </div>
+    <button class="btn secondary exitActivityBtn" onclick="quitActivity()">Exit</button>
+  </div>
+  <div class="quizTop"><div class="statBox"><span>Mode</span><strong>${state.quizMode.replace(" Full Mock","")}</strong></div><div class="statBox"><span>Score</span><strong>${state.score}/${state.answered}</strong></div><div class="statBox"><span>Timer</span><strong class="timer" id="timerBox">${state.timerEnd?"--:--":"—"}</strong></div><div class="statBox"><span>Left</span><strong>${pool.length-state.quizIndex}</strong></div></div>
   <div class="card"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic||q.section}`}</span><h2 style="margin-top:14px">Item ${state.quizIndex+1} of ${pool.length}</h2><div class="progress"><div style="width:${((state.quizIndex+1)/pool.length)*100}%"></div></div><h3>${h(q.q)}</h3><div class="choices">${q.choices.map((c,i)=>`<button class="choice ${answered&&i===q.answer?'correct':''} ${answered&&i===state.chosen&&i!==q.answer?'wrong':''}" ${answered?'disabled':''} onclick="chooseAnswer(${i})"><span class="letter">${String.fromCharCode(65+i)}</span><span>${h(c)}</span></button>`).join("")}</div>
   ${answered&&!state.quizMode.includes("Full Mock")&&state.quizMode!=="Diagnostic"?`<div class="answerBox ${correct?'good':'bad'}"><h3>${correct?'✅ Correct':'❌ Corrected'}</h3>${!correct?`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p>`:''}<div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div><div style="height:12px"></div><button class="btn full" onclick="nextQuestion()">${state.quizIndex>=pool.length-1?'Finish':'Next Question'} →</button></div>`:""}
   </div></div>`;
@@ -274,7 +296,7 @@ function renderFinished(timeExpired=false){
   const score=state.responses.filter(r=>!r.edq && r.correct).length;
   state.score=score; const pct=totalScored?Math.round(score/totalScored*100):0;
   const s=stats(); s.lastMock={mode:state.quizMode,score,total:totalScored,pct,date:new Date().toISOString()}; saveStats(s);
-  app.innerHTML=card(`<div style="text-align:center"><div style="font-size:60px">${timeExpired?"⏰":"🏆"}</div><h2>${timeExpired?"Time Finished":"Finished"}</h2><p>Scored Test Proper: <b>${score}/${totalScored}</b> (${pct}%)</p><p class="muted">${state.responses.filter(r=>r.edq).length} EDQ items completed and not counted in score.</p><div class="progress"><div style="width:${pct}%"></div></div></div><h3>Score Breakdown</h3>${breakdownHTML()}<div style="height:12px"></div><div class="grid2"><button class="btn" onclick="reviewResults()">Review Explanations</button><button class="btn secondary" onclick="resetQuizState(); setTab('dashboard')">Back to Dashboard</button></div>`);
+  app.innerHTML=card(`<div style="text-align:center"><div style="font-size:60px">${timeExpired?"⏰":"🏆"}</div><h2>${timeExpired?"Time Finished":"Finished"}</h2><p>Scored Test Proper: <b>${score}/${totalScored}</b> (${pct}%)</p><p class="muted">${state.responses.filter(r=>r.edq).length} EDQ items completed and not counted in score.</p><div class="progress"><div style="width:${pct}%"></div></div></div><h3>Score Breakdown</h3>${breakdownHTML()}<div style="height:12px"></div><div class="grid2"><button class="btn" onclick="reviewResults()">Review Explanations</button><button class="btn secondary" onclick="resetQuizState(); setTab('dashboard')">Back to Home</button></div>`);
 }
 function reviewResults(){
   app.innerHTML=`<div class="section">${card(`<h2>Answer Review</h2><p class="muted">Correct answer, shortcut, and explanation for every scored item. EDQ items are non-scored.</p><button class="btn secondary" onclick="renderFinished()">Back to score</button>`)}
@@ -352,6 +374,7 @@ function resetProfileOnly(){localStorage.removeItem("profile");renderSettings()}
 function resetAllProgress(){if(confirm("Reset all progress, weak spots, stats, and profile?")){localStorage.removeItem("profile");localStorage.removeItem("stats");localStorage.removeItem("weakIds");setTab("dashboard")}}
 
 function render(){
+  if(!state.quizStarted) exitFocusMode();
   renderTabs();
   if(state.tab==="dashboard")renderDashboard();
   if(state.tab==="library")renderLibrary();
@@ -360,5 +383,5 @@ function render(){
   if(state.tab==="progress")renderProgress();
   if(state.tab==="settings")renderSettings();
 }
-window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
+window.quitActivity=quitActivity;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
 const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"dark";document.documentElement.dataset.theme=savedTheme;themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();
