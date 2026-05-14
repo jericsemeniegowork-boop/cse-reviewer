@@ -8,7 +8,7 @@ Dedicated to **Tunet**.
 
 ## Live Preview
 
-`your-vercel-link-here`
+https://cse-reviewer-cyan.vercel.app/
 
 ## Highlights
 
