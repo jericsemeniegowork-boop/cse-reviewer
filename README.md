@@ -1,23 +1,22 @@
 # CSE Review Studio
 
-A focused Civil Service Exam review web app built for practice, pacing, and progress tracking.
+A soft, focused Civil Service Exam review web app built for practice, pacing, and progress tracking.
 
-The app includes full-length mock exams, topic drills, caselet activities, graphic/data questions, weak-spot review, formula cards, flashcards, and a distraction-free activity mode for answering questions.
+The app includes full-length mock exams, focused drills, graphic/data questions, weak-spot review, formula cards, flashcards, and a distraction-free activity mode for answering questions.
 
 Dedicated to **Tunet**.
 
 ## Live Preview
 
-https://cse-reviewer-cyan.vercel.app/
+`your-vercel-link-here`
 
 ## Highlights
 
 - Professional and SubProfessional mock exam modes
 - Practice mode with instant answer feedback
-- Focused activity mode for quizzes and mocks
+- Focus mode during quizzes and mock exams
 - Balanced question randomizer
 - Recent-repeat avoidance
-- Section drills and diagnostic activities
 - Focused drill modes
 - Caselet-based questions
 - Graphic and data interpretation questions
@@ -25,7 +24,9 @@ https://cse-reviewer-cyan.vercel.app/
 - Progress dashboard
 - Coverage matrix
 - Formula library and flashcards
-- Dark mode
+- Soft pastel pink theme
+- Matte card design
+- Dark mode support
 - Mobile-friendly layout
 
 ## Focused Drill Modes
@@ -57,25 +58,37 @@ https://cse-reviewer-cyan.vercel.app/
 
 ## Version Notes
 
+### v14
+
+- Updated the interface with a softer flat pastel style
+- Reduced glossy effects, heavy shadows, and strong gradients
+- Improved the matte card look for a cleaner layout
+- Kept dark mode and activity focus mode
+
+### v13
+
+- Added cozy pastel pink theme
+- Changed default theme to light mode
+- Improved spacing, alignment, and card organization
+
 ### v12
+
 - Expanded the question bank to 690 scored original practice questions
 - Added deeper coverage for math, grammar, Filipino, law, logic, clerical, and data interpretation
 - Added focused drill modes
 - Added a coverage matrix in the Progress section
 
 ### v11
+
 - Added graphic-style questions
-- Added support for visual question blocks
+- Added visual question support
 - Added Graphic / Data Drill mode
 
 ### v10
+
 - Improved the question randomizer
 - Balanced question selection by topic, subtopic, and difficulty
 - Added recent-repeat avoidance using browser storage
-
-### v9
-- Added focused activity mode for quizzes, drills, diagnostics, and mocks
-- Hid navigation, hero sections, and extra content while answering
 
 ## Built With
 
@@ -86,6 +99,7 @@ https://cse-reviewer-cyan.vercel.app/
 
 ## Project Structure
 
+```txt
 index.html   main page
 style.css    design and layout
 data.js      questions, formulas, topics, and reviewer data
