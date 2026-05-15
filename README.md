@@ -1,107 +1,91 @@
 # CSE Review Studio
 
-A soft, focused Civil Service Exam review web app built for practice, pacing, and progress tracking.
+A mobile-friendly Civil Service Exam review web app built for focused practice, personal notes, and progress tracking.
 
-The app includes full-length mock exams, focused drills, graphic/data questions, weak-spot review, formula cards, flashcards, and a distraction-free activity mode for answering questions.
+The app includes mock exams, topic drills, math variants, General Information review, formula cards, and a personal study library where users can write notes, track mistakes, and review lessons by topic.
 
 Dedicated to **Tunet**.
 
 ## Live Preview
 
-https://cse-reviewer-cyan.vercel.app/
+`your-vercel-link-here`
 
-## Highlights
+## Features
 
-- Professional and SubProfessional mock exam modes
-- Practice mode with instant answer feedback
-- Focus mode during quizzes and mock exams
-- Balanced question randomizer
-- Recent-repeat avoidance
-- Focused drill modes
-- Caselet-based questions
-- Graphic and data interpretation questions
-- Weak spot tracking
-- Progress dashboard
-- Coverage matrix
-- Formula library and flashcards
-- Soft pastel pink theme
-- Matte card design
-- Dark mode support
+- Professional and SubProfessional review modes
+- Full mock exam practice
+- Topic-based drills
+- Math Variant Drill with changing numbers
+- Instant answer checking
+- Explanations and shortcut methods
+- Option to hide shortcuts or explanations
+- Formula and shortcut section
+- Personal study library
+- Per-topic notes
+- Mistake log
+- Rules and formula notes
+- Topic confidence and priority settings
+- Progress tracking
+- Weak-spot review
 - Mobile-friendly layout
-
-## Focused Drill Modes
-
-- Math Drill
-- Grammar Drill
-- Filipino Drill
-- Constitution / Law Drill
-- Logic / Analogy Drill
-- Clerical Drill
-- Reading / Paragraph Drill
-- Graphic / Data Drill
+- Light and dark mode
+- LocalStorage support for saved progress and notes
 
 ## Coverage
 
+The reviewer covers common Civil Service Exam areas:
+
+- Numerical Ability
+- Verbal Ability
+- Analytical Ability
 - General Information
+- Filipino
+- Data Interpretation
+- Abstract Reasoning
+- Data Sufficiency
+- Clerical Ability
+
+General Information includes practice for:
+
 - Philippine Constitution
 - RA 6713
 - Human Rights
 - Environmental laws and concepts
-- English Verbal Ability
-- Filipino Verbal Ability
-- Numerical Ability
-- Analytical Ability
-- Data Interpretation
-- Clerical Ability
-- Data Sufficiency
-- Abstract Reasoning
+- Accountability of public officers
+- Constitutional commissions
+- Public service ethics
 
-## Version Notes
+## Study Library
 
-### v14
+The Library is designed as a personal reviewer space.
 
-- Updated the interface with a softer flat pastel style
-- Reduced glossy effects, heavy shadows, and strong gradients
-- Improved the matte card look for a cleaner layout
-- Kept dark mode and activity focus mode
+Each topic includes:
 
-### v13
+- Study guide
+- Lessons
+- Personal notes
+- Mistake log
+- Rules and formulas
+- Subtopic coverage
+- Quick topic drills
 
-- Added cozy pastel pink theme
-- Changed default theme to light mode
-- Improved spacing, alignment, and card organization
+Notes and progress are saved in the browser using LocalStorage.
 
-### v12
-
-- Expanded the question bank to 690 scored original practice questions
-- Added deeper coverage for math, grammar, Filipino, law, logic, clerical, and data interpretation
-- Added focused drill modes
-- Added a coverage matrix in the Progress section
-
-### v11
-
-- Added graphic-style questions
-- Added visual question support
-- Added Graphic / Data Drill mode
-
-### v10
-
-- Improved the question randomizer
-- Balanced question selection by topic, subtopic, and difficulty
-- Added recent-repeat avoidance using browser storage
-
-## Built With
+## Tech Stack
 
 - HTML
 - CSS
 - JavaScript
 - LocalStorage
 
+No build step is required.
+
 ## Project Structure
 
-index.html   main page
-style.css    design and layout
-data.js      questions, formulas, topics, and reviewer data
-app.js       quiz logic, scoring, settings, progress, and randomizer
-vercel.json  Vercel routing
-README.md    project documentation
+```txt
+index.html    main page
+style.css     design and responsive layout
+data.js       questions, formulas, lessons, and study data
+app.js        app logic, scoring, notes, settings, and quiz flow
+vercel.json   Vercel routing configuration
+README.md     project documentation
