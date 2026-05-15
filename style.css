@@ -1497,3 +1497,35 @@ html[data-theme="dark"] .mobileNav{
 .settingBlock.wide{grid-column:1/-1}.chip.active{background:var(--brand);color:#fff;border-color:var(--brand)}.topicBtn.active{outline:2px solid color-mix(in srgb,var(--brand) 45%, transparent)}
 body.compactStudy .card,body.compactStudy .studyLessonCard,body.compactStudy .personalNotesBox,body.compactStudy .topicCustomizer{padding:12px;border-radius:18px}body.compactStudy .section{gap:12px}body.compactStudy .notesArea{min-height:180px}
 @media (min-width:720px){.notesArea{min-height:320px}}
+
+
+/* v24 Library Master */
+.libraryMaster{display:grid;gap:16px;align-items:start}
+@media (min-width:900px){.libraryMaster{grid-template-columns:320px minmax(0,1fr)}}
+.librarySidebar{position:sticky;top:86px;padding:14px;max-height:calc(100vh - 110px);overflow:auto}
+.librarySideHeader h2{margin:0 0 6px}.libraryTopicList{margin-top:12px}
+.topicBadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.topicBadges span{font-size:10px;font-weight:900;padding:3px 7px;border-radius:999px;background:var(--soft);border:1px solid var(--border);color:var(--muted)}
+.libraryMain{display:grid;gap:14px;min-width:0}
+.libraryHero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;overflow:hidden}
+.libraryHero h2{margin:12px 0 8px;line-height:1.25}
+.libraryHeroActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.libraryTabs{display:flex;gap:8px;flex-wrap:wrap;border:1px solid var(--border);background:var(--card);border-radius:20px;padding:8px;box-shadow:var(--shadow2)}
+.libraryTab{border:0;border-radius:14px;padding:10px 14px;font-weight:900;cursor:pointer;background:transparent;color:var(--muted)}
+.libraryTab.active{background:var(--brand);color:white}
+.libraryPanel{display:grid;gap:14px}.libraryGrid{display:grid;gap:14px}
+@media (min-width:780px){.libraryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.topicSnapshot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.topicSnapshot div{border:1px solid var(--border);background:var(--soft);border-radius:16px;padding:12px}
+.topicSnapshot span{display:block;color:var(--muted);font-size:12px;font-weight:800}
+.topicSnapshot strong{display:block;margin-top:5px;font-size:22px}
+.libraryChecklist{display:grid;gap:10px}
+.libraryChecklist label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);background:var(--card);border-radius:14px;padding:10px;line-height:1.45}
+.libraryChecklist input{margin-top:3px}
+.subtopicRows{display:grid;gap:10px}
+.subtopicRow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);background:var(--soft);border-radius:16px;padding:10px}
+.subtopicRow span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.studyFlow{margin:0;padding-left:20px;color:var(--muted);line-height:1.75}
+.lessonDeck{display:grid;gap:12px}.notesWorkspace{display:grid;gap:14px}.notesArea.big{min-height:360px}
+@media (max-width:899px){.librarySidebar{position:relative;top:auto;max-height:none}.libraryHero{flex-direction:column}.libraryHeroActions{justify-content:flex-start}}
+@media (max-width:639px){.libraryTabs{gap:6px}.libraryTab{flex:1 1 30%;padding:9px 8px}.subtopicRow{align-items:flex-start;flex-direction:column}.subtopicRow .btn{width:100%}}
