@@ -24,7 +24,11 @@ const DEFAULT_PROFILE = {
   weakestTopics:["numerical","verbal"],
   preferredPace:"balanced",
   reminderText:"",
-  themeAccent:"blue"
+  themeAccent:"blue",
+  showShortcuts:true,
+  showExplanations:true,
+  studyFirstMode:true,
+  homeStyle:"minimal"
 };
 
 let state = {
@@ -197,52 +201,69 @@ function streakDays(){
 function renderDashboard(){
   const p=profile(); const s=stats(); const d=daysUntil(p.examDate); const daily=dailyAnswered(); const goalPct=Math.min(100,Math.round((daily/(p.dailyGoal||1))*100));
   const weak=weakestTopicIds();
-  app.innerHTML=`<div class="section">
-    ${card(`<div class="profileCard">
-      <span class="pill premium-pill">Review Studio</span>
-      <h2 style="margin-top:14px">${p.name?`Welcome back, ${h(p.name)}.`:"Welcome to your review space."}</h2>
-      <p class="muted">${h(coachLine())}</p><p class="small muted">Question bank: ${QUESTIONS.length} items • deep coverage drills • balanced randomizer avoids repeats.</p>
-      <div style="height:14px"></div>
-      <div class="miniActions">
-        <button class="btn" onclick="recommendedStart()">Start Drill</button>
-        <button class="btn secondary" onclick="setTab('activities')">Take Full Mock</button>
-        <button class="btn secondary" onclick="setTab('settings')">${p.name?"Edit Settings":"Set Up Profile"}</button>
+  app.innerHTML=`<div class="section studyHome">
+    ${card(`<div class="studyHomeHeader">
+      <div>
+        <h2>${p.name?`Hi, ${h(p.name)}.`:"Study workspace"}</h2>
+        <p class="muted">${p.reminderText?h(p.reminderText):"Pick one useful session and start. Your notes and progress stay in this browser."}</p>
       </div>
+      <div class="quietCount"><b>${QUESTIONS.length}</b><span>questions</span></div>
     </div>`)}
+    ${card(`<h3>Today</h3>
+      <div class="progressBarLite"><div style="width:${goalPct}%"></div></div>
+      <p class="muted">${daily} of ${p.dailyGoal} questions completed today. ${d===null?"Set an exam date in Settings if you want a countdown.":d>=0?`${d} days left until your set exam date.`:"Update your exam date in Settings."}</p>
+      <div class="miniActions">
+        <button class="btn" onclick="startMathVariantDrill()">Math Variant Drill</button>
+        <button class="btn secondary" onclick="recommendedStart()">Suggested Drill</button>
+        <button class="btn secondary" onclick="setTab('library')">Open Notes</button>
+      </div>`)}
     <div class="kpiGrid">
-      <div class="kpi"><span>Exam Type</span><strong>${p.examType==="professional"?"Professional":"SubPro"}</strong></div>
-      <div class="kpi"><span>Countdown</span><strong>${d===null?"Set date":d>=0?d+"d":"Update"}</strong></div>
+      <div class="kpi"><span>Track</span><strong>${p.examType==="professional"?"Professional":"SubPro"}</strong></div>
       <div class="kpi"><span>Accuracy</span><strong>${accuracy()}%</strong></div>
-      <div class="kpi"><span>Today</span><strong>${daily}/${p.dailyGoal}</strong></div>
+      <div class="kpi"><span>Weak Saved</span><strong>${weakIds().length}</strong></div>
+      <div class="kpi"><span>Target</span><strong>${p.targetScore}%</strong></div>
     </div>
-    ${card(`<h3>Today’s Goal</h3><div class="progressBarLite"><div style="width:${goalPct}%"></div></div><p class="muted">${daily} of ${p.dailyGoal} questions completed today.</p><div class="streakRow">${streakDays().map(x=>`<div class="streakDot ${x.done?"done":""}">${x.label}</div>`).join("")}</div>`)}
     ${card(`<h3>Suggested Focus</h3><div class="grid3">${weak.map(id=>{const t=topicById(id);return `<div class="recommendation"><span class="pill">${t.icon} ${t.name}</span><p class="muted">${t.focus}</p><button class="btn full" onclick="startTopicDrill('${id}')">Start Drill</button></div>`}).join("")}</div>`)}
-    ${card(`<h3>Quick Access</h3><div class="grid3"><button class="btn secondary" onclick="startQuickSprint()">⚡ 10-item Sprint</button><button class="btn secondary" onclick="startCaseletDrill()">📄 Caselet Drill</button><button class="btn secondary" onclick="startGraphicDrill()">📊 Graphic Drill</button><button class="btn secondary" onclick="setTab('progress')">📈 View Progress</button></div>`)}
-    ${card(DEDICATION_FOOTER, "dedicationFooter small muted")}
+    ${card(`<h3>Personal Shortcuts</h3><div class="grid3">
+      <button class="btn secondary" onclick="setTab('library')">Write Notes</button>
+      <button class="btn secondary" onclick="renderFormulas()">Formula Cards</button>
+      <button class="btn secondary" onclick="setTab('progress')">Check Progress</button>
+    </div>`)}
   </div>`;
 }
-function recommendedStart(){const ids=weakestTopicIds();startTopicDrill(ids[0]||"numerical")}
-function startTopicDrill(topicId){
-  state.sectionTopic=topicId;
-  const pool=balancedPick(QUESTIONS.filter(q=>q.topic===topicId),20,{mode:"topic-"+topicId});
-  state.quizMode=`Focused Drill: ${topicById(topicId).name}`;
-  state.quizStarted=true; state.quizPool=pool; state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[]; setTabNoReset("practice"); renderQuiz();
-}
-function setTabNoReset(tab){state.tab=tab;renderTabs()}
-
-function scopeBox(title,items){return `<div class="scopeBox"><b>▪ ${title}</b><div>${items.map(x=>`› ${x}`).join("<br>")}</div></div><br>`}
 function renderLibrary(){
+  const noteTopic = state.noteTopic || state.activeTopic || "numerical";
   const filtered=TOPICS.filter(t=>(t.name+" "+t.focus).toLowerCase().includes(state.topicQuery.toLowerCase()));
   const t=topicById(state.activeTopic);
-  app.innerHTML=`<div class="libraryLayout">
-    ${card(`<h2>📚 Topic Library</h2><input placeholder="Search topic..." value="${h(state.topicQuery)}" oninput="state.topicQuery=this.value; renderLibrary()"><div style="height:12px"></div><div class="topicList">${filtered.map(topic=>`<button class="topicBtn ${state.activeTopic===topic.id?'active':''}" onclick="state.activeTopic='${topic.id}'; renderLibrary()"><div class="topicRow"><div class="topicIcon" style="background:${topic.color}">${topic.icon}</div><div><div class="topicName">${topic.name}</div><div class="small muted">${topic.focus}</div><div class="small">${topicCount(topic.id)} questions • ${topicAccuracy(topic.id)}% accuracy</div></div></div></button>`).join("")}</div>`)}
-    <div><div class="lessonHero" style="background:${t.color}"><div style="font-size:42px">${t.icon}</div><h2>${t.name}</h2><p>${t.focus}</p></div>
-    ${(LESSONS[t.id]||[]).map((lesson,i)=>`<div class="card" style="margin-bottom:12px"><span class="pill">Lesson ${i+1}</span><h3 style="margin-top:12px">${lesson[0]}</h3><div class="grid3"><div class="infoBox"><b>Standard</b>${lesson[1]}</div><div class="infoBox"><b>Shortcut</b>${lesson[2]}</div><div class="infoBox"><b>Explanation</b>${lesson[3]}</div></div></div>`).join("")}
-    ${card(`<h3>Topic Actions</h3><div class="grid2"><button class="btn" onclick="startTopicDrill('${t.id}')">Start 20-item Drill</button><button class="btn secondary" onclick="state.selectedTopics=['${t.id}']; setTab('practice')">Practice Only This Topic</button></div>`)}
+  const lessons=(LESSONS[t.id]||[]);
+  const lessonHTML=lessons.map((lesson,i)=>{
+    const title=Array.isArray(lesson)?lesson[0]:(lesson.title||`Lesson ${i+1}`);
+    const standard=Array.isArray(lesson)?lesson[1]:(lesson.body||"");
+    const shortcut=Array.isArray(lesson)?lesson[2]:"";
+    const explanation=Array.isArray(lesson)?lesson[3]:"";
+    return `<div class="studyLessonCard">
+      <span class="pill">Lesson ${i+1}</span>
+      <h3>${h(title)}</h3>
+      <div class="lessonParagraph"><p>${h(standard)}</p>${shortcut?`<p><b>Shortcut:</b> ${h(shortcut)}</p>`:""}${explanation?`<p><b>Explanation:</b> ${h(explanation)}</p>`:""}</div>
+    </div>`;
+  }).join("");
+  app.innerHTML=`<div class="libraryLayout studyLibrary">
+    ${card(`<h2>Topic Library</h2>
+      <input placeholder="Search topic..." value="${h(state.topicQuery)}" oninput="state.topicQuery=this.value; renderLibrary()">
+      <div style="height:12px"></div>
+      <div class="topicList">${filtered.map(topic=>`<button class="topicBtn ${state.activeTopic===topic.id?'active':''}" onclick="state.activeTopic='${topic.id}'; state.noteTopic='${topic.id}'; renderLibrary()"><div class="topicRow"><div class="topicIcon" style="background:${topic.color}">${topic.icon}</div><div><div class="topicName">${topic.name}</div><div class="small muted">${topic.focus}</div><div class="small">${topicCount(topic.id)} questions • ${topicAccuracy(topic.id)}% accuracy</div></div></div></button>`).join("")}</div>`)}
+    <div>
+      ${card(`<h2>Study Notes</h2>
+        <p class="muted">Choose a topic, read the notes, then write your own reviewer notes below.</p>
+        <div class="chipRow">${noteTopicButton(noteTopic,"numerical","Math")}${noteTopicButton(noteTopic,"verbal","Verbal")}${noteTopicButton(noteTopic,"analytical","Analytical")}${noteTopicButton(noteTopic,"general","General Info")}${noteTopicButton(noteTopic,"filipino","Filipino")}${noteTopicButton(noteTopic,"abstract","Sequences")}</div>
+        ${renderStudyNotesBlock(noteTopic)}
+        ${renderPersonalNotes(noteTopic)}`)}
+      <div class="lessonHero softLessonHero" style="background:${t.color}"><div style="font-size:36px">${t.icon}</div><h2>${t.name}</h2><p>${t.focus}</p></div>
+      ${lessonHTML || card(`<h3>No lesson cards yet</h3><p class="muted">Use the notes area above to build your own reviewer for this topic.</p>`)}
+      ${card(`<h3>Topic Actions</h3><div class="grid2"><button class="btn" onclick="startTopicDrill('${t.id}')">Start 20-item Drill</button><button class="btn secondary" onclick="state.selectedTopics=['${t.id}']; setTab('practice')">Practice Only This Topic</button></div>`)}
     </div>
   </div>`;
 }
-
 function renderTopicPicker(){
   return card(`<h2>🎯 Pick Topics</h2><p class="muted">Choose topics and difficulty for practice mode.</p><div class="grid2"><button class="btn secondary" onclick="toggleAllTopics()">${state.selectedTopics.length===TOPICS.length?'Clear All':'Select All'}</button><select onchange="state.difficulty=this.value; render()"><option value="">All difficulties</option><option value="easy" ${state.difficulty==="easy"?"selected":""}>Easy only</option><option value="medium" ${state.difficulty==="medium"?"selected":""}>Medium only</option><option value="hard" ${state.difficulty==="hard"?"selected":""}>Hard only</option></select></div><div style="height:12px"></div><div class="topicChips">${TOPICS.map(t=>`<button class="chip ${state.selectedTopics.includes(t.id)?'active':''}" onclick="toggleTopic('${t.id}')"><span class="topicIcon" style="background:${t.color}">${t.icon}</span><span><b>${t.name}</b><br><span class="small muted">${topicCount(t.id)} questions • ${topicAccuracy(t.id)}% accuracy</span></span></button>`).join("")}</div>`);
 }
@@ -294,6 +315,108 @@ function startFocusedDrill(label, matcher, count=30){
   setTabNoReset("activities");
   renderQuiz();
 }
+
+function makeDynChoice(correct, wrongs){
+  let vals=[String(correct)];
+  wrongs.forEach(w=>{ if(!vals.includes(String(w))) vals.push(String(w)); });
+  let base=Number(String(correct).replace(/[^0-9.-]/g,""));
+  let i=1;
+  while(vals.length<4){
+    let extra=Number.isFinite(base) ? String(base+i) : `Choice ${i}`;
+    if(!vals.includes(extra)) vals.push(extra);
+    i++;
+  }
+  vals=seededShuffle(vals.slice(0,4), Date.now()+Math.floor(Math.random()*9999));
+  return {choices:vals, answer:vals.indexOf(String(correct))};
+}
+function dynMoney(n){
+  n=Number(n);
+  return "₱"+n.toLocaleString(undefined,{maximumFractionDigits:2});
+}
+function dynQ(topic, subtopic, q, correct, wrongs, shortcut, explanation){
+  const c=makeDynChoice(correct, wrongs);
+  const item={id:"dynmath"+Date.now()+Math.floor(Math.random()*100000), kind:"scored", topic, subtopic, difficulty:"medium", q, choices:c.choices, answer:c.answer, shortcut, explanation, modeTags:["math","dynamic","variant"], sourceBank:"dynamicMath"};
+  QUESTIONS.push(item);
+  return item;
+}
+function makeMathVariantQuestions(count=30){
+  const out=[];
+  const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  const pctList=[5,10,12,15,20,25,30,35,40];
+  const templates=[
+    function(){
+      const pct=pctList[rand(0,pctList.length-1)];
+      const amount=rand(12,70)*50;
+      const ans=amount*pct/100;
+      return dynQ("numerical","Dynamic Percent",`${pct}% of ${dynMoney(amount)} is how much?`, dynMoney(ans), [dynMoney(ans+50),dynMoney(Math.max(0,ans-50)),dynMoney(amount-pct)], `${pct}% = ${pct}/100.`, `${amount} × ${pct}/100 = ${ans}.`);
+    },
+    function(){
+      const old=rand(8,40)*50;
+      const rate=[10,15,20,25,30,40][rand(0,5)];
+      const newer=old*(1+rate/100);
+      return dynQ("numerical","Dynamic Percent Change",`A value increased from ${dynMoney(old)} to ${dynMoney(newer)}. What is the percent increase?`, `${rate}%`, [`${rate+5}%`,`${Math.max(1,rate-5)}%`,`${Math.round(newer/old*100)}%`], `Increase ÷ original × 100.`, `Increase is ${newer-old}. ${newer-old} ÷ ${old} × 100 = ${rate}%.`);
+    },
+    function(){
+      const final=rand(8,30)*80;
+      const off=[10,20,25,30,40][rand(0,4)];
+      const orig=final/(1-off/100);
+      return dynQ("numerical","Dynamic Reverse Percent",`After a ${off}% discount, an item costs ${dynMoney(final)}. What was the original price?`, dynMoney(orig), [dynMoney(orig+100),dynMoney(Math.max(0,orig-100)),dynMoney(final*(1+off/100))], `Remaining price is ${100-off}% of original.`, `${final} ÷ ${(100-off)/100} = ${orig}.`);
+    },
+    function(){
+      const total=[60,72,84,96,120,144,180,240][rand(0,7)];
+      const a=rand(2,7), b=rand(2,8);
+      const ans=total*b/(a+b);
+      return dynQ("numerical","Dynamic Ratio",`${total} forms are divided in the ratio ${a}:${b}. How many forms are in the second share?`, String(ans), [String(total*a/(a+b)),String(ans+6),String(Math.max(1,ans-6))], `Total parts = ${a+b}.`, `Second share = ${b}/${a+b} × ${total} = ${ans}.`);
+    },
+    function(){
+      const a=[6,8,10,12,15][rand(0,4)];
+      const b=[12,16,18,20,24][rand(0,4)];
+      const ans=Number((a*b/(a+b)).toFixed(2));
+      return dynQ("numerical","Dynamic Work Rate",`A can finish a job in ${a} days and B in ${b} days. How long together?`, `${ans} days`, [`${Math.min(a,b)} days`,`${Math.round((a+b)/2)} days`,`${ans+2} days`], `Together time = ab ÷ (a+b).`, `${a}×${b} ÷ (${a}+${b}) = ${ans} days.`);
+    },
+    function(){
+      const dist=rand(12,50)*10;
+      const s1=rand(3,8)*10;
+      const s2=rand(3,8)*10;
+      const ans=Number((dist/(s1+s2)).toFixed(2));
+      return dynQ("numerical","Dynamic Motion",`Two vehicles are ${dist} km apart and travel toward each other at ${s1} km/h and ${s2} km/h. When will they meet?`, `${ans} hours`, [`${ans+1} hours`,`${Math.max(.5,ans-1)} hours`,`${Number((dist/Math.max(1,Math.abs(s1-s2))).toFixed(2))} hours`], `Toward each other means add speeds.`, `${dist} ÷ (${s1}+${s2}) = ${ans} hours.`);
+    },
+    function(){
+      const x=rand(8,25), diff=rand(3,10), yrs=rand(2,8);
+      const total=2*x+diff+2*yrs;
+      return dynQ("numerical","Dynamic Age",`Ben is ${diff} years older than Ana. In ${yrs} years, their ages will total ${total}. How old is Ana now?`, String(x), [String(x+diff),String(x+yrs),String(Math.max(1,x-yrs))], `Let Ana=x and Ben=x+${diff}.`, `x+${yrs}+x+${diff}+${yrs}=${total}, so x=${x}.`);
+    },
+    function(){
+      const count=rand(4,6), avg=rand(70,92);
+      let known=[]; for(let i=0;i<count-1;i++) known.push(avg+rand(-8,8));
+      const miss=count*avg-known.reduce((a,b)=>a+b,0);
+      return dynQ("numerical","Dynamic Average",`The average of ${count} scores is ${avg}. Known scores: ${known.join(", ")}. What is the missing score?`, String(miss), [String(miss+3),String(miss-3),String(avg)], `Total = average × count.`, `Needed total=${count*avg}. Known total=${known.reduce((a,b)=>a+b,0)}. Missing=${miss}.`);
+    },
+    function(){
+      const L=rand(8,30), W=rand(5,18);
+      const p=2*(L+W);
+      return dynQ("numerical","Dynamic Geometry",`A rectangle is ${L} m long and ${W} m wide. What is its perimeter?`, `${p} m`, [`${L*W} m`,`${L+W} m`,`${p+10} m`], `Perimeter=2(L+W).`, `2(${L}+${W})=${p} m.`);
+    },
+    function(){
+      const start=rand(2,12), gap=rand(3,8);
+      const seq=[start,start+gap,start+2*gap,start+3*gap,start+4*gap];
+      const ans=start+5*gap;
+      return dynQ("abstract","Dynamic Sequence",`Find the next number: ${seq.join(", ")}, __`, String(ans), [String(ans+gap),String(ans-gap),String(ans+2)], `Arithmetic sequence with common difference ${gap}.`, `${seq[4]} + ${gap} = ${ans}.`);
+    }
+  ];
+  for(let i=0;i<count;i++) out.push(templates[i%templates.length]());
+  return seededShuffle(out, Date.now());
+}
+function startMathVariantDrill(){
+  const pool=makeMathVariantQuestions(30);
+  state.quizMode="Math Variant Drill";
+  state.quizStarted=true;
+  state.quizPool=pool;
+  state.quizIndex=0; state.score=0; state.answered=0; state.chosen=null; state.responses=[];
+  setTabNoReset("activities");
+  renderQuiz();
+}
+
 function startMathDrill(){startFocusedDrill("Math Drill",["math","numerical","sufficiency"],30)}
 function startGrammarDrill(){startFocusedDrill("Grammar Drill",["grammar","Correct Usage","Error Recognition","Spelling","Prepositions","Articles"],30)}
 function startFilipinoDrill(){startFocusedDrill("Filipino Drill",["filipino"],30)}
@@ -328,7 +451,7 @@ function renderActivities(){
   ${card(`<div class="modeCard"><h2>🗂️ SubProfessional Full Mock</h2><p class="muted">165-item simulation: 20 EDQ + 145 scored practice items. Timer: 2h 40m.</p><button class="btn full" onclick="startFullMock('subprofessional')">Start SubProfessional Full Mock</button></div>`)}
   </div>
   ${card(`<h2>Focused Drills</h2><p class="muted">Fast access to high-yield coverage areas.</p><div class="grid3">
-    <button class="btn secondary" onclick="startMathDrill()">Math Drill</button>
+    <button class="btn secondary" onclick="startMathDrill()">Math Drill</button><button class="btn secondary" onclick="startMathVariantDrill()">Math Variant Drill</button>
     <button class="btn secondary" onclick="startGrammarDrill()">Grammar Drill</button>
     <button class="btn secondary" onclick="startFilipinoDrill()">Filipino Drill</button>
     <button class="btn secondary" onclick="startLawDrill()">Constitution / Law Drill</button>
@@ -378,7 +501,7 @@ function renderQuiz(){
   </div>
   <div class="quizTop"><div class="statBox"><span>Mode</span><strong>${state.quizMode.replace(" Full Mock","")}</strong></div><div class="statBox"><span>Score</span><strong>${state.score}/${state.answered}</strong></div><div class="statBox"><span>Timer</span><strong class="timer" id="timerBox">${state.timerEnd?"--:--":"—"}</strong></div><div class="statBox"><span>Left</span><strong>${pool.length-state.quizIndex}</strong></div></div>
   <div class="card"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic||q.section}`}</span><h2 style="margin-top:14px">Item ${state.quizIndex+1} of ${pool.length}</h2><div class="progress"><div style="width:${((state.quizIndex+1)/pool.length)*100}%"></div></div><h3>${h(q.q)}</h3>${renderVisual(q)}<div class="choices">${q.choices.map((c,i)=>`<button class="choice ${answered&&i===q.answer?'correct':''} ${answered&&i===state.chosen&&i!==q.answer?'wrong':''}" ${answered?'disabled':''} onclick="chooseAnswer(${i})"><span class="letter">${String.fromCharCode(65+i)}</span><span>${h(c)}</span></button>`).join("")}</div>
-  ${answered&&!state.quizMode.includes("Full Mock")&&state.quizMode!=="Diagnostic"?`<div class="answerBox ${correct?'good':'bad'}"><h3>${correct?'✅ Correct':'❌ Corrected'}</h3>${!correct?`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p>`:''}<div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div><div style="height:12px"></div><button class="btn full" onclick="nextQuestion()">${state.quizIndex>=pool.length-1?'Finish':'Next Question'} →</button></div>`:""}
+  ${answered&&!state.quizMode.includes("Full Mock")&&state.quizMode!=="Diagnostic"?`<div class="answerBox ${correct?'good':'bad'}"><h3>${correct?'✅ Correct':'❌ Corrected'}</h3>${!correct?`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p>`:''}${answerSupportHTML(q)}<div style="height:12px"></div><button class="btn full" onclick="nextQuestion()">${state.quizIndex>=pool.length-1?'Finish':'Next Question'} →</button></div>`:""}
   </div></div>`;
   updateTimer();
 }
@@ -398,13 +521,13 @@ function renderFinished(timeExpired=false){
 }
 function reviewResults(){
   app.innerHTML=`<div class="section">${card(`<h2>Answer Review</h2><p class="muted">Correct answer, shortcut, and explanation for every scored item. EDQ items are non-scored.</p><button class="btn secondary" onclick="renderFinished()">Back to score</button>`)}
-  ${state.responses.map((r,i)=>{const q=questionById(r.id), t=topicById(q.topic); if(!q)return ""; return `<div class="reviewItem"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic} • ${q.difficulty}`}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3>${renderVisual(q)}<p><b>Your answer:</b> ${r.chosen==null?'No answer':String.fromCharCode(65+r.chosen)+'. '+h(q.choices[r.chosen])}</p>${q.kind==="edq"?`<p class="muted">EDQ item — no correct or incorrect answer.</p>`:`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div>`}</div>`}).join("")}</div>`;
+  ${state.responses.map((r,i)=>{const q=questionById(r.id), t=topicById(q.topic); if(!q)return ""; return `<div class="reviewItem"><span class="pill">${q.kind==="edq"?"📝 EDQ • Non-scored":`${t.icon} ${t.name} • ${q.subtopic} • ${q.difficulty}`}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3>${renderVisual(q)}<p><b>Your answer:</b> ${r.chosen==null?'No answer':String.fromCharCode(65+r.chosen)+'. '+h(q.choices[r.chosen])}</p>${q.kind==="edq"?`<p class="muted">EDQ item — no correct or incorrect answer.</p>`:`<p><b>Correct answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p>${answerSupportHTML(q)}`}</div>`}).join("")}</div>`;
 }
 function renderWeak(){
   const weakQs=weakIds().map(questionById).filter(Boolean);
   if(!weakQs.length){app.innerHTML=card(`<h2>🧠 Weak Spot Bank</h2><p class="muted">No weak spots yet. Missed scored questions will appear here.</p><button class="btn" onclick="setTab('practice')">Start Practice</button>`);return}
   app.innerHTML=`<div class="section">${card(`<h2>🧠 Weak Spot Bank</h2><p class="muted">${weakQs.length} saved weak questions.</p><div class="grid2"><button class="btn" onclick="startWeakQuiz()">Practice Weak Spots</button><button class="btn danger" onclick="clearWeak()">Clear Weak Spots</button></div>`)}
-  ${weakQs.map((q,i)=>`<div class="reviewItem"><span class="pill">${topicById(q.topic).icon} ${topicById(q.topic).name} • ${q.subtopic}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3>${renderVisual(q)}<p><b>Answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p><div class="grid2"><div class="infoBox"><b>Shortcut</b>${h(q.shortcut)}</div><div class="infoBox"><b>Explanation</b>${h(q.explanation)}</div></div></div>`).join("")}</div>`;
+  ${weakQs.map((q,i)=>`<div class="reviewItem"><span class="pill">${topicById(q.topic).icon} ${topicById(q.topic).name} • ${q.subtopic}</span><h3 style="margin-top:10px">${i+1}. ${h(q.q)}</h3>${renderVisual(q)}<p><b>Answer:</b> ${String.fromCharCode(65+q.answer)}. ${h(q.choices[q.answer])}</p>${answerSupportHTML(q)}</div>`).join("")}</div>`;
 }
 function startWeakQuiz(){const qs=balancedPool(weakIds().map(questionById).filter(Boolean),{mode:"weak"});if(!qs.length)return renderWeak();state.quizStarted=true;state.quizMode="Weak Practice";state.quizPool=qs;state.quizIndex=0;state.score=0;state.answered=0;state.chosen=null;state.responses=[];setTabNoReset("practice");renderQuiz()}
 function renderProgress(){
@@ -430,10 +553,13 @@ function renderFlashcard(){
   const c=cards[state.flashIndex%cards.length];
   return card(`<h2>Flashcard</h2><p class="muted">Tap card to flip.</p><div class="flashcard scopeBox" onclick="state.flashSide=state.flashSide==='front'?'back':'front'; renderFormulas()"><h2>${state.flashSide==='front'?h(c.front):h(c.back)}</h2></div><div class="grid2"><button class="btn secondary" onclick="state.flashIndex=Math.max(0,state.flashIndex-1);state.flashSide='front';renderFormulas()">Previous</button><button class="btn" onclick="state.flashIndex++;state.flashSide='front';renderFormulas()">Next</button></div>`);
 }
+function toggleShortcuts(v){saveProfile({showShortcuts:v});renderSettings()}
+function toggleExplanations(v){saveProfile({showExplanations:v});renderSettings()}
+function toggleStudyFirst(v){saveProfile({studyFirstMode:v});renderSettings()}
 function renderSettings(){
   const p=profile();
   app.innerHTML=`<div class="section">
-  ${card(`<h2>⚙️ Review Settings</h2><p class="muted">Use these settings to adjust your exam track, study goals, weak topics, and review style. Saved locally in this browser.</p>`)}
+  ${card(`<h2>Settings</h2><p class="muted">Personalize how the reviewer behaves while studying. Saved locally in this browser.</p>`)}
   <div class="settingsGrid">
     <div class="settingBlock"><label>Name</label><input id="setName" value="${h(p.name)}" placeholder="Your name"></div>
     <div class="settingBlock"><label>Exam Type</label><select id="setExamType"><option value="professional" ${p.examType==="professional"?"selected":""}>Professional</option><option value="subprofessional" ${p.examType==="subprofessional"?"selected":""}>SubProfessional</option></select></div>
@@ -442,18 +568,22 @@ function renderSettings(){
     <div class="settingBlock"><label>Daily Question Goal</label><input id="setDailyGoal" type="number" min="5" max="300" value="${p.dailyGoal}"></div>
     <div class="settingBlock"><label>Daily Study Minutes</label><input id="setStudyMinutes" type="number" min="5" max="300" value="${p.studyMinutes}"></div>
     <div class="settingBlock"><label>Review Style</label><select id="setCoachStyle"><option value="direct" ${p.coachStyle==="direct"?"selected":""}>Straightforward</option><option value="calm" ${p.coachStyle==="calm"?"selected":""}>Calm</option><option value="strict" ${p.coachStyle==="strict"?"selected":""}>Strict</option><option value="motivational" ${p.coachStyle==="motivational"?"selected":""}>Encouraging</option></select></div>
-    <div class="settingBlock"><label>Explanation Depth</label><select id="setExplanationDepth"><option value="short" ${p.explanationDepth==="short"?"selected":""}>Short</option><option value="balanced" ${p.explanationDepth==="balanced"?"selected":""}>Balanced</option><option value="deep" ${p.explanationDepth==="deep"?"selected":""}>Deep</option></select></div>
     <div class="settingBlock"><label>Preferred Pace</label><select id="setPreferredPace"><option value="fast" ${p.preferredPace==="fast"?"selected":""}>Fast drills</option><option value="balanced" ${p.preferredPace==="balanced"?"selected":""}>Balanced</option><option value="deep" ${p.preferredPace==="deep"?"selected":""}>Deep review</option></select></div>
-    <div class="settingBlock"><label>Daily Reminder Text</label><input id="setReminderText" value="${h(p.reminderText)}" placeholder="Example: 30 questions before games"></div>
+    <div class="settingBlock wide"><label>Daily Reminder Text</label><input id="setReminderText" value="${h(p.reminderText)}" placeholder="Example: Math first, then one law drill"></div>
   </div>
+  ${card(`<h3>Study Display</h3>
+    <div class="settingRow"><span>Show shortcuts after answering</span><button class="btn secondary" onclick="toggleShortcuts(${p.showShortcuts===false?'true':'false'})">${p.showShortcuts===false?"Off":"On"}</button></div>
+    <div class="settingRow"><span>Show explanations after answering</span><button class="btn secondary" onclick="toggleExplanations(${p.showExplanations===false?'true':'false'})">${p.showExplanations===false?"Off":"On"}</button></div>
+    <div class="settingRow"><span>Study-first home layout</span><button class="btn secondary" onclick="toggleStudyFirst(${p.studyFirstMode===false?'true':'false'})">${p.studyFirstMode===false?"Off":"On"}</button></div>
+    <p class="small muted">Turn shortcuts or explanations off when you want more space for long passages and your own notes.</p>`)}
   ${card(`<h3>Weak Topics You Want to Prioritize</h3><div class="checkboxGrid">${TOPICS.map(t=>`<label class="checkItem"><input type="checkbox" class="weakCheck" value="${t.id}" ${p.weakestTopics.includes(t.id)?"checked":""}> <span>${t.icon} ${t.name}</span></label>`).join("")}</div>`)}
   ${card(`<h3>Data Controls</h3><div class="grid3"><button class="btn" onclick="saveSettings()">Save Settings</button><button class="btn secondary" onclick="resetProfileOnly()">Reset Profile</button><button class="btn danger" onclick="resetAllProgress()">Reset All Progress</button></div>`)}
-  ${card(`<h3>Formula Library</h3><p class="muted">Formula cards are still available here.</p><button class="btn secondary" onclick="renderFormulas()">Open Formula Library</button>`)}
   ${card(`<h3>About</h3>${DEDICATION_FOOTER}`, "dedicationFooter small muted")}
   </div>`;
 }
 function saveSettings(){
   const weak=[...document.querySelectorAll(".weakCheck:checked")].map(x=>x.value);
+  const p=profile();
   saveProfile({
     name:document.getElementById("setName").value.trim(),
     examType:document.getElementById("setExamType").value,
@@ -462,10 +592,12 @@ function saveSettings(){
     dailyGoal:Number(document.getElementById("setDailyGoal").value||30),
     studyMinutes:Number(document.getElementById("setStudyMinutes").value||45),
     coachStyle:document.getElementById("setCoachStyle").value,
-    explanationDepth:document.getElementById("setExplanationDepth").value,
     preferredPace:document.getElementById("setPreferredPace").value,
     reminderText:document.getElementById("setReminderText").value.trim(),
-    weakestTopics:weak.length?weak:["numerical","verbal"]
+    weakestTopics:weak.length?weak:["numerical","verbal"],
+    showShortcuts:p.showShortcuts,
+    showExplanations:p.showExplanations,
+    studyFirstMode:p.studyFirstMode
   });
   setTab("dashboard");
 }
@@ -482,5 +614,5 @@ function render(){
   if(state.tab==="progress")renderProgress();
   if(state.tab==="settings")renderSettings();
 }
-window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
+window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;window.toggleStudyFirst=toggleStudyFirst;window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
 const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"light";document.documentElement.dataset.theme=savedTheme;themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();
