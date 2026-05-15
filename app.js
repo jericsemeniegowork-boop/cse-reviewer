@@ -5,6 +5,7 @@ const DEDICATION_FOOTER = "Dedicated to <b>Tunet</b> \u2014 Of all the trials th
 const TABS = [
   ["dashboard","Home","🏠"],
   ["library","Library","📚"],
+  ["formulas","Formulas","🧮"],
   ["practice","Practice","🎯"],
   ["activities","Mocks","📝"],
   ["progress","Progress","📈"],
@@ -393,6 +394,36 @@ function startTopicDrill(topicId){
 function setTabNoReset(tab){state.tab=tab;renderTabs()}
 
 function scopeBox(title,items){return `<div class="scopeBox"><b>▪ ${title}</b><div>${items.map(x=>`› ${x}`).join("<br>")}</div></div><br>`}
+
+function noteTemplates(){
+  return (window.CSE_DATA && window.CSE_DATA.noteTemplates) || {
+    study:{title:"Good Study Note",body:"Main idea:\n\nKey rules:\n- \n- \n\nExample:\n\nCommon trap:\n\nHow I will remember it:\n"},
+    mistake:{title:"Mistake Review Note",body:"Question/topic missed:\n\nWhy I got it wrong:\n\nCorrect rule:\n\nShortcut:\n\nSimilar problem to practice:\n"},
+    formula:{title:"Formula Note",body:"Formula/rule:\n\nWhen to use it:\n\nStandard method:\n\nShortcut method:\n\nExample:\n\nTrap to avoid:\n"},
+    reading:{title:"Paragraph Review Note",body:"Passage/topic:\n\nMain idea:\n\nImportant details:\n\nInference/conclusion:\n\nVocabulary or grammar notes:\n\nMistake to avoid:\n"}
+  };
+}
+function insertNoteTemplate(topicId,type,field="notes"){
+  const templates=noteTemplates();
+  const template=templates[type] || templates.study;
+  const d=libraryData();
+  d[topicId]=d[topicId] || {notes:"", mistakes:"", rules:"", checklist:{}, lastReviewed:""};
+  const current=d[topicId][field] || "";
+  const block=`\n\n--- ${template.title} ---\n${template.body}`;
+  d[topicId][field]=current.trim()?current+block:template.body;
+  save("libraryData",d);
+  state.libraryPanel="notes";
+  renderLibrary();
+}
+function clearNoteField(topicId,field){
+  if(!confirm("Clear this note field?")) return;
+  const d=libraryData();
+  d[topicId]=d[topicId] || {notes:"", mistakes:"", rules:"", checklist:{}, lastReviewed:""};
+  d[topicId][field]="";
+  save("libraryData",d);
+  renderLibrary();
+}
+
 function renderLibrary(){
   const active = state.activeTopic || "numerical";
   const query=(state.topicQuery||"").toLowerCase();
@@ -782,15 +813,82 @@ function saveSettings(){
 function resetProfileOnly(){localStorage.removeItem("profile");renderSettings()}
 function resetAllProgress(){if(confirm("Reset all progress, weak spots, stats, and profile?")){localStorage.removeItem("profile");localStorage.removeItem("stats");localStorage.removeItem("weakIds");setTab("dashboard")}}
 
+
+
+function renderTopicCustomizer(topicId){
+  const pref=getTopicPref(topicId);
+  return `<div class="topicCustomizer">
+    <h3>Topic Personalization</h3>
+    <p class="small muted">Set how you want to study this topic. This is for your notes and review style, not a task list.</p>
+    <div class="settingsGrid">
+      <div class="settingBlock"><label>Confidence</label><select onchange="saveTopicPref('${topicId}','confidence',this.value);renderLibrary()"><option value="" ${pref.confidence===""?"selected":""}>Not set</option><option value="weak" ${pref.confidence==="weak"?"selected":""}>Weak</option><option value="okay" ${pref.confidence==="okay"?"selected":""}>Okay</option><option value="strong" ${pref.confidence==="strong"?"selected":""}>Strong</option></select></div>
+      <div class="settingBlock"><label>Priority</label><select onchange="saveTopicPref('${topicId}','priority',this.value);renderLibrary()"><option value="low" ${pref.priority==="low"?"selected":""}>Low</option><option value="normal" ${pref.priority==="normal"?"selected":""}>Normal</option><option value="high" ${pref.priority==="high"?"selected":""}>High</option></select></div>
+      <div class="settingBlock"><label>Note Style</label><select onchange="saveTopicPref('${topicId}','noteStyle',this.value);renderLibrary()"><option value="" ${(pref.noteStyle||"")===""?"selected":""}>Default</option><option value="short" ${pref.noteStyle==="short"?"selected":""}>Short reminders</option><option value="detailed" ${pref.noteStyle==="detailed"?"selected":""}>Detailed explanation</option><option value="formula" ${pref.noteStyle==="formula"?"selected":""}>Formula/rule focused</option><option value="mistakes" ${pref.noteStyle==="mistakes"?"selected":""}>Mistake focused</option></select></div>
+      <div class="settingBlock wide"><label>Personal reminder for this topic</label><input value="${h(pref.reminder||"")}" placeholder="Example: Check if the problem is reverse percent before solving" oninput="saveTopicPref('${topicId}','reminder',this.value)"></div>
+    </div>
+  </div>`;
+}
+
+
+function renderLibraryNotes(topicId){
+  const d=libraryTopicData(topicId);
+  const pref=getTopicPref(topicId);
+  const templates=noteTemplates();
+  return `<div class="notesWorkspace noteStudio">
+    ${card(`<h3>Good Note Builder</h3>
+      <p class="muted">Use templates when you want clean study notes instead of random reminders. Templates append to your note area.</p>
+      <div class="noteTemplateGrid">
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','study','notes')">Study Note</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','mistake','mistakes')">Mistake Note</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','formula','rules')">Formula Note</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','reading','notes')">Paragraph Note</button>
+      </div>
+      <p class="small muted">Current note style: ${h(pref.noteStyle||"default")} ${pref.reminder?`• Reminder: ${h(pref.reminder)}`:""}</p>`)}
+    ${card(`<h3>My Study Notes</h3>
+      <p class="muted">Use this as the main reviewer for this topic. Best format: main idea, key rule, example, trap, memory hook.</p>
+      <textarea class="notesArea big" placeholder="${h(templates.study.body)}" oninput="saveLibraryField('${topicId}','notes',this.value)">${h(d.notes||"")}</textarea>
+      <div class="noteActions"><button class="btn secondary" onclick="insertNoteTemplate('${topicId}','study','notes')">Add Template</button><button class="btn secondary" onclick="clearNoteField('${topicId}','notes')">Clear</button></div>`)}
+    ${card(`<h3>Mistake Log</h3>
+      <p class="muted">Write why you missed something. Avoid vague notes like “careless.” Write the exact rule.</p>
+      <textarea class="notesArea" placeholder="${h(templates.mistake.body)}" oninput="saveLibraryField('${topicId}','mistakes',this.value)">${h(d.mistakes||"")}</textarea>
+      <div class="noteActions"><button class="btn secondary" onclick="insertNoteTemplate('${topicId}','mistake','mistakes')">Add Template</button><button class="btn secondary" onclick="clearNoteField('${topicId}','mistakes')">Clear</button></div>`)}
+    ${card(`<h3>Rules / Formulas</h3>
+      <p class="muted">For formulas, grammar rules, laws, dates, and memory hooks. Keep this concise.</p>
+      <textarea class="notesArea" placeholder="${h(templates.formula.body)}" oninput="saveLibraryField('${topicId}','rules',this.value)">${h(d.rules||"")}</textarea>
+      <div class="noteActions"><button class="btn secondary" onclick="insertNoteTemplate('${topicId}','formula','rules')">Add Template</button><button class="btn secondary" onclick="clearNoteField('${topicId}','rules')">Clear</button></div>`)}
+    ${card(`<h3>Note Actions</h3><div class="grid3"><button class="btn secondary" onclick="copyTopicNotes('${topicId}')">Copy Notes</button><button class="btn secondary" onclick="exportTopicNotes('${topicId}')">Export .txt</button><button class="btn secondary" onclick="setTab('formulas')">Open Formula Section</button></div>`)}
+  </div>`;
+}
+
+
+function renderLibraryOverview(topicId){
+  const t=topicById(topicId), qs=topicQuestions(topicId), pref=getTopicPref(topicId), d=libraryTopicData(topicId);
+  const acc=topicAccuracy(topicId), rows=topicSubtopicRows(topicId), checklist=(window.CSE_DATA.libraryChecklists||{})[topicId]||[];
+  const doneCount=checklist.filter((_,i)=>d.checklist&&d.checklist[i]).length;
+  const last=d.lastReviewed?new Date(d.lastReviewed).toLocaleDateString():"Not yet";
+  return `<div class="libraryGrid">
+    ${card(`<h3>Topic Snapshot</h3><div class="topicSnapshot">
+      <div><span>Questions</span><strong>${qs.length}</strong></div>
+      <div><span>Accuracy</span><strong>${acc}%</strong></div>
+      <div><span>Confidence</span><strong>${pref.confidence||"Unset"}</strong></div>
+      <div><span>Priority</span><strong>${pref.priority||"normal"}</strong></div>
+    </div><p class="small muted">Last reviewed: ${last}</p><div class="grid2"><button class="btn" onclick="startTopicDrill('${topicId}')">Start Topic Drill</button><button class="btn secondary" onclick="markTopicReviewed('${topicId}')">Mark Reviewed</button></div>`)}
+    ${card(`<h3>Study Checklist</h3><p class="small muted">${doneCount}/${checklist.length} checked</p><div class="libraryChecklist">${checklist.map((x,i)=>`<label><input type="checkbox" ${d.checklist&&d.checklist[i]?"checked":""} onchange="toggleLibraryCheck('${topicId}',${i})"><span>${h(x)}</span></label>`).join("")}</div>`)}
+    ${card(`<h3>Subtopic Map</h3><div class="subtopicRows">${rows.slice(0,10).map(([name,info])=>`<div class="subtopicRow"><div><b>${h(name)}</b><span>${info.total} items • Easy ${info.easy||0} • Medium ${info.medium||0} • Hard ${info.hard||0}</span></div><button class="btn secondary" onclick="startSubtopicDrill('${topicId}','${escAttr(name)}')">Drill</button></div>`).join("")}</div>`)}
+    ${card(`<h3>Study Method</h3><div class="noteMethod"><p><b>1. Understand</b><span>Read the guide and lesson cards first.</span></p><p><b>2. Practice</b><span>Do a focused drill from this topic or subtopic.</span></p><p><b>3. Write</b><span>Save the rule you missed in your notes.</span></p><p><b>4. Repeat</b><span>Re-answer similar questions after the note is written.</span></p></div>`)}
+  </div>`;
+}
+
 function render(){
   if(!state.quizStarted) exitFocusMode();
   renderTabs();
   if(state.tab==="dashboard")renderDashboard();
   if(state.tab==="library")renderLibrary();
+  if(state.tab==="formulas")renderFormulas();
   if(state.tab==="practice")renderPractice();
   if(state.tab==="activities")renderActivities();
   if(state.tab==="progress")renderProgress();
   if(state.tab==="settings")renderSettings();
 }
-window.saveUserNote=saveUserNote;window.saveTopicPref=saveTopicPref;window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;window.toggleCompactMode=toggleCompactMode;window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.saveLibraryField=saveLibraryField;window.toggleLibraryCheck=toggleLibraryCheck;window.markTopicReviewed=markTopicReviewed;window.startSubtopicDrill=startSubtopicDrill;window.exportTopicNotes=exportTopicNotes;window.copyTopicNotes=copyTopicNotes;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
+window.saveUserNote=saveUserNote;window.saveTopicPref=saveTopicPref;window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;window.toggleCompactMode=toggleCompactMode;window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.saveLibraryField=saveLibraryField;window.toggleLibraryCheck=toggleLibraryCheck;window.markTopicReviewed=markTopicReviewed;window.startSubtopicDrill=startSubtopicDrill;window.exportTopicNotes=exportTopicNotes;window.copyTopicNotes=copyTopicNotes;window.insertNoteTemplate=insertNoteTemplate;window.clearNoteField=clearNoteField;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
 const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"light";document.documentElement.dataset.theme=savedTheme;if(profile().compactMode===true)document.body.classList.add("compactStudy");themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();

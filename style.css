@@ -1529,3 +1529,57 @@ body.compactStudy .card,body.compactStudy .studyLessonCard,body.compactStudy .pe
 .lessonDeck{display:grid;gap:12px}.notesWorkspace{display:grid;gap:14px}.notesArea.big{min-height:360px}
 @media (max-width:899px){.librarySidebar{position:relative;top:auto;max-height:none}.libraryHero{flex-direction:column}.libraryHeroActions{justify-content:flex-start}}
 @media (max-width:639px){.libraryTabs{gap:6px}.libraryTab{flex:1 1 30%;padding:9px 8px}.subtopicRow{align-items:flex-start;flex-direction:column}.subtopicRow .btn{width:100%}}
+
+
+/* v25 Optimized Notes + Restored Formula Section */
+.noteStudio{
+  gap:16px;
+}
+.noteTemplateGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.noteActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.noteActions .btn{
+  padding:9px 12px;
+}
+.noteMethod{
+  display:grid;
+  gap:10px;
+}
+.noteMethod p{
+  margin:0;
+  border:1px solid var(--border);
+  background:var(--soft);
+  border-radius:16px;
+  padding:12px;
+}
+.noteMethod b{
+  display:block;
+  margin-bottom:4px;
+}
+.noteMethod span{
+  color:var(--muted);
+  line-height:1.55;
+}
+.formulaGrid .card{
+  box-shadow:var(--shadow2);
+}
+.formulaCode{
+  white-space:pre-wrap;
+}
+@media (max-width:639px){
+  .noteTemplateGrid{
+    grid-template-columns:1fr;
+  }
+  .notesArea.big{
+    min-height:300px;
+  }
+}
