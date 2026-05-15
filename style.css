@@ -1583,3 +1583,419 @@ body.compactStudy .card,body.compactStudy .studyLessonCard,body.compactStudy .pe
     min-height:300px;
   }
 }
+
+
+/* v26 Calm + Human UI */
+:root{
+  --readable-width: 940px;
+}
+
+body{
+  letter-spacing:-.01em;
+}
+
+.card{
+  border-radius:22px !important;
+  box-shadow:0 6px 18px rgba(165,88,125,.07) !important;
+}
+
+h1,h2,h3{
+  letter-spacing:-.03em;
+}
+
+p,.muted,.small{
+  line-height:1.65;
+}
+
+.btn{
+  border-radius:14px;
+  min-height:42px;
+}
+
+.btn.secondary{
+  box-shadow:none !important;
+}
+
+/* Keep the app from feeling like a marketing page */
+.hero{
+  display:none !important;
+}
+
+.section{
+  max-width:1120px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* Library */
+.v26Library{
+  display:grid;
+  gap:18px;
+  align-items:start;
+}
+
+@media (min-width:980px){
+  .v26Library{
+    grid-template-columns:280px minmax(0,1fr);
+  }
+}
+
+.v26Side{
+  padding:16px;
+}
+
+@media (min-width:980px){
+  .v26Side{
+    position:sticky;
+    top:86px;
+    max-height:calc(100vh - 108px);
+    overflow:auto;
+  }
+}
+
+.v26Side h2{
+  margin:0 0 6px;
+}
+
+.v26Side input{
+  margin:12px 0;
+}
+
+.v26TopicList{
+  display:grid;
+  gap:8px;
+}
+
+.v26Topic{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--text);
+  text-align:left;
+  border-radius:16px;
+  padding:9px;
+  cursor:pointer;
+}
+
+.v26Topic:hover,
+.v26Topic.active{
+  background:var(--soft);
+  border-color:var(--border);
+}
+
+.v26Topic .topicIcon{
+  width:36px;
+  height:36px;
+  flex:0 0 auto;
+}
+
+.v26Topic b{
+  display:block;
+  font-size:14px;
+}
+
+.v26Topic small{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:2px;
+}
+
+.v26Main{
+  min-width:0;
+  display:grid;
+  gap:14px;
+}
+
+.v26Header{
+  display:grid;
+  gap:14px;
+  padding:20px;
+}
+
+@media (min-width:760px){
+  .v26Header{
+    grid-template-columns:1fr auto;
+    align-items:start;
+  }
+}
+
+.v26Header h2{
+  margin:10px 0 8px;
+  max-width:760px;
+  font-size:clamp(22px,3vw,34px);
+  line-height:1.15;
+}
+
+.v26Stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  min-width:min(420px,100%);
+}
+
+.v26Stats div{
+  border:1px solid var(--border);
+  background:var(--soft);
+  border-radius:16px;
+  padding:10px;
+  text-align:center;
+}
+
+.v26Stats span{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:900;
+}
+
+.v26Stats strong{
+  display:block;
+  margin-top:3px;
+  font-size:18px;
+}
+
+.v26Tabs{
+  position:sticky;
+  top:72px;
+  z-index:5;
+  background:color-mix(in srgb,var(--bg) 90%, transparent);
+  backdrop-filter:blur(12px);
+  box-shadow:none !important;
+}
+
+.libraryTab{
+  border-radius:14px;
+}
+
+.v26Panel{
+  max-width:var(--readable-width);
+  width:100%;
+  margin:0 auto;
+  display:grid;
+  gap:14px;
+}
+
+.v26Stack,
+.v26Notes{
+  display:grid;
+  gap:14px;
+}
+
+.v26SectionHead h2,
+.v26SectionHead h3{
+  margin:0 0 6px;
+}
+
+.v26SectionHead p{
+  margin:0 0 10px;
+}
+
+/* Notes */
+.v26TemplateRow{
+  display:grid;
+  gap:10px;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  margin-top:12px;
+}
+
+.v26NoteBig{
+  min-height:430px !important;
+  font-size:15px;
+}
+
+.v26NoteSmall{
+  min-height:240px !important;
+  font-size:14px;
+}
+
+.notesArea{
+  line-height:1.75 !important;
+  border-radius:18px !important;
+  box-shadow:none !important;
+}
+
+.v26NoteActions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.v26Two{
+  display:grid;
+  gap:14px;
+}
+
+@media (min-width:820px){
+  .v26Two{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+/* Lessons */
+.v26Lessons{
+  display:grid;
+  gap:12px;
+}
+
+.v26Lesson{
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 6px 18px rgba(165,88,125,.07);
+}
+
+.v26Lesson h3{
+  margin:0 0 10px;
+}
+
+.v26Lesson p{
+  margin:0 0 12px;
+  color:var(--muted);
+  line-height:1.75;
+}
+
+.v26Lesson div{
+  margin-top:8px;
+  border-left:3px solid var(--brand);
+  padding-left:10px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+/* Coverage */
+.v26Rows .subtopicRow,
+.v26Checklist label{
+  background:var(--card);
+}
+
+.subtopicRow{
+  gap:14px;
+}
+
+.v26Checklist{
+  display:grid;
+  gap:10px;
+}
+
+.v26Checklist label{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px;
+  line-height:1.45;
+}
+
+/* Formula cards */
+.v26CardGrid,
+.v26FormulaGrid{
+  display:grid;
+  gap:12px;
+}
+
+@media (min-width:760px){
+  .v26CardGrid,
+  .v26FormulaGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+.v26FormulaCard,
+.v26FormulaFull{
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:22px;
+  padding:16px;
+  box-shadow:0 6px 18px rgba(165,88,125,.07);
+}
+
+.v26FormulaCard span{
+  display:inline-block;
+  font-size:11px;
+  font-weight:900;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.v26FormulaCard h3,
+.v26FormulaFull h3{
+  margin:0 0 10px;
+}
+
+.v26FormulaCard code,
+.v26FormulaFull code{
+  display:block;
+  white-space:pre-wrap;
+  background:var(--soft);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px;
+  color:var(--text);
+  font-family:inherit;
+  line-height:1.55;
+}
+
+.v26FormulaCard p,
+.v26FormulaFull p{
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.v26FormulaCard small{
+  display:block;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* Mobile cleanup */
+@media (max-width:979px){
+  .v26Side{
+    position:relative;
+    top:auto;
+    max-height:none;
+  }
+}
+
+@media (max-width:639px){
+  .v26TemplateRow{
+    grid-template-columns:1fr;
+  }
+
+  .v26Tabs{
+    top:64px;
+    gap:6px;
+  }
+
+  .libraryTab{
+    flex:1 1 30%;
+    padding:9px 8px;
+  }
+
+  .v26Header{
+    padding:16px;
+  }
+
+  .v26Stats{
+    grid-template-columns:1fr;
+  }
+
+  .subtopicRow{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .subtopicRow .btn{
+    width:100%;
+  }
+
+  .v26NoteBig{
+    min-height:330px !important;
+  }
+}

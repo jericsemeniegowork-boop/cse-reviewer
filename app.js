@@ -879,6 +879,187 @@ function renderLibraryOverview(topicId){
   </div>`;
 }
 
+
+
+function v26TabButton(id,label){
+  return `<button class="libraryTab ${state.libraryPanel===id?'active':''}" onclick="state.libraryPanel='${id}';renderLibrary()">${label}</button>`;
+}
+function v26Stats(topicId){
+  const pref=getTopicPref(topicId);
+  return `<div class="v26Stats">
+    <div><span>Questions</span><strong>${topicCount(topicId)}</strong></div>
+    <div><span>Accuracy</span><strong>${topicAccuracy(topicId)}%</strong></div>
+    <div><span>Confidence</span><strong>${pref.confidence||"Unset"}</strong></div>
+  </div>`;
+}
+function v26SubtopicButton(topicId,name){
+  return `<button class="btn secondary" onclick="startSubtopicDrillEncoded('${topicId}','${encodeURIComponent(name)}')">Drill</button>`;
+}
+function startSubtopicDrillEncoded(topicId, encodedName){
+  startSubtopicDrill(topicId, decodeURIComponent(encodedName));
+}
+function renderLibrary(){
+  const active = state.activeTopic || "numerical";
+  const query=(state.topicQuery||"").toLowerCase();
+  const filtered=TOPICS.filter(t=>(t.name+" "+t.focus).toLowerCase().includes(query));
+  const t=topicById(active);
+  const pref=getTopicPref(active);
+  const panel=state.libraryPanel||"notes";
+
+  const body = panel==="notes" ? renderLibraryNotes(active)
+    : panel==="guide" ? renderLibraryGuide(active)
+    : panel==="lessons" ? renderLibraryLessons(active)
+    : panel==="coverage" ? renderLibraryCoverage(active)
+    : panel==="cards" ? renderLibraryCards(active)
+    : renderLibraryNotes(active);
+
+  app.innerHTML=`<div class="v26Library">
+    <aside class="v26Side card">
+      <h2>Library</h2>
+      <p class="muted">Pick one topic. Read a little. Write what matters.</p>
+      <input placeholder="Search topics..." value="${h(state.topicQuery||"")}" oninput="state.topicQuery=this.value;renderLibrary()">
+      <div class="v26TopicList">
+        ${filtered.map(topic=>`<button class="v26Topic ${active===topic.id?'active':''}" onclick="state.activeTopic='${topic.id}';state.noteTopic='${topic.id}';state.libraryPanel='notes';renderLibrary()">
+          <span class="topicIcon" style="background:${topic.color}">${topic.icon}</span>
+          <span><b>${topic.name}</b><small>${topicCount(topic.id)} questions • ${topicAccuracy(topic.id)}%</small></span>
+        </button>`).join("")}
+      </div>
+    </aside>
+
+    <main class="v26Main">
+      <section class="v26Header card">
+        <div>
+          <span class="pill">${t.icon} ${h(t.name)}</span>
+          <h2>${h(t.focus)}</h2>
+          <p class="muted">${pref.reminder?`Reminder: ${h(pref.reminder)}`:"Use this space like your own reviewer. Notes first, drills after."}</p>
+        </div>
+        ${v26Stats(active)}
+      </section>
+
+      <nav class="libraryTabs v26Tabs">
+        ${v26TabButton("notes","Notes")}
+        ${v26TabButton("guide","Guide")}
+        ${v26TabButton("lessons","Lessons")}
+        ${v26TabButton("coverage","Coverage")}
+        ${v26TabButton("cards","Cards")}
+      </nav>
+
+      <section class="v26Panel">${body}</section>
+    </main>
+  </div>`;
+}
+
+function renderLibraryNotes(topicId){
+  const d=libraryTopicData(topicId);
+  const pref=getTopicPref(topicId);
+  const templates=noteTemplates();
+  return `<div class="v26Notes">
+    ${card(`<div class="v26SectionHead"><h3>Notes</h3><p class="muted">This is the main study space. Write it the way you would explain it to yourself tomorrow.</p></div>
+      <div class="v26TemplateRow">
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','study','notes')">Study template</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','mistake','mistakes')">Mistake template</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','formula','rules')">Formula template</button>
+        <button class="btn secondary" onclick="setTab('formulas')">Formula section</button>
+      </div>
+      ${pref.noteStyle?`<p class="small muted">Note style: ${h(pref.noteStyle)}</p>`:""}`)}
+
+    ${card(`<h3>Main Notes</h3>
+      <p class="small muted">Best format: main idea, key rule, example, trap, memory hook.</p>
+      <textarea class="notesArea v26NoteBig" placeholder="${h(templates.study.body)}" oninput="saveLibraryField('${topicId}','notes',this.value)">${h(d.notes||"")}</textarea>
+      <div class="v26NoteActions">
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','study','notes')">Add template</button>
+        <button class="btn secondary" onclick="copyTopicNotes('${topicId}')">Copy</button>
+        <button class="btn secondary" onclick="exportTopicNotes('${topicId}')">Export</button>
+      </div>`)}
+
+    <div class="v26Two">
+      ${card(`<h3>Mistake Log</h3>
+        <p class="small muted">Write the missed rule, not just “careless.”</p>
+        <textarea class="notesArea v26NoteSmall" placeholder="${h(templates.mistake.body)}" oninput="saveLibraryField('${topicId}','mistakes',this.value)">${h(d.mistakes||"")}</textarea>`)}
+      ${card(`<h3>Rules / Formulas</h3>
+        <p class="small muted">Keep the rule short enough to remember.</p>
+        <textarea class="notesArea v26NoteSmall" placeholder="${h(templates.formula.body)}" oninput="saveLibraryField('${topicId}','rules',this.value)">${h(d.rules||"")}</textarea>`)}
+    </div>
+  </div>`;
+}
+
+function renderLibraryGuide(topicId){
+  return `<div class="v26Stack">
+    ${card(`<div class="v26SectionHead"><h3>Study Guide</h3><p class="muted">Read this once, then rewrite only the useful parts in Notes.</p></div>
+      <div class="v26Reader">${renderStudyNotesBlock(topicId)}</div>
+      ${renderTopicCustomizer(topicId)}`)}
+  </div>`;
+}
+
+function renderLibraryLessons(topicId){
+  const raw=LESSONS[topicId]||[];
+  const q=(state.libraryQuery||"").toLowerCase();
+  const filtered=raw.filter(lesson=>{
+    const title=Array.isArray(lesson)?lesson[0]:(lesson.title||"");
+    const body=Array.isArray(lesson)?lesson.slice(1).join(" "):(lesson.body||"");
+    return (title+" "+body).toLowerCase().includes(q);
+  });
+  return `<div class="v26Stack">
+    ${card(`<div class="v26SectionHead"><h3>Lessons</h3><p class="muted">Short explanations. Use them when a topic feels blurry.</p></div>
+      <input placeholder="Search lessons..." value="${h(state.libraryQuery||"")}" oninput="state.libraryQuery=this.value;renderLibrary()">`)}
+    <div class="v26Lessons">
+      ${filtered.map((lesson,i)=>{
+        const title=Array.isArray(lesson)?lesson[0]:(lesson.title||`Lesson ${i+1}`);
+        const standard=Array.isArray(lesson)?lesson[1]:(lesson.body||"");
+        const shortcut=Array.isArray(lesson)?lesson[2]:"";
+        const explanation=Array.isArray(lesson)?lesson[3]:"";
+        return `<article class="v26Lesson"><h3>${h(title)}</h3><p>${h(standard)}</p>${shortcut?`<div><b>Shortcut:</b> ${h(shortcut)}</div>`:""}${explanation?`<div><b>Why it matters:</b> ${h(explanation)}</div>`:""}</article>`;
+      }).join("") || `<div class="card"><h3>No lessons matched</h3><p class="muted">Try a different search term.</p></div>`}
+    </div>
+  </div>`;
+}
+
+function renderLibraryCoverage(topicId){
+  const rows=topicSubtopicRows(topicId);
+  const d=libraryTopicData(topicId);
+  const checklist=(window.CSE_DATA.libraryChecklists||{})[topicId]||[];
+  return `<div class="v26Stack">
+    ${card(`<div class="v26SectionHead"><h3>Coverage</h3><p class="muted">Use this when the topic feels too big. Pick a smaller part and drill it.</p></div>
+      <div class="subtopicRows v26Rows">
+        ${rows.slice(0,12).map(([name,info])=>`<div class="subtopicRow"><div><b>${h(name)}</b><span>${info.total} items • Easy ${info.easy||0} • Medium ${info.medium||0} • Hard ${info.hard||0}</span></div>${v26SubtopicButton(topicId,name)}</div>`).join("")}
+      </div>`)}
+    ${card(`<div class="v26SectionHead"><h3>Small Checklist</h3><p class="muted">Use these as gentle reminders, not pressure.</p></div>
+      <div class="libraryChecklist v26Checklist">
+        ${checklist.map((x,i)=>`<label><input type="checkbox" ${d.checklist&&d.checklist[i]?"checked":""} onchange="toggleLibraryCheck('${topicId}',${i})"><span>${h(x)}</span></label>`).join("")}
+      </div>`)}
+  </div>`;
+}
+
+function renderLibraryCards(topicId){
+  const cards=topicFormulaCards(topicId);
+  return `<div class="v26Stack">
+    ${card(`<div class="v26SectionHead"><h3>Cards</h3><p class="muted">Quick rules and reminders for this topic.</p></div>
+      <button class="btn secondary" onclick="setTab('formulas')">Open full Formula section</button>`)}
+    <div class="v26CardGrid">
+      ${cards.map(f=>`<article class="v26FormulaCard"><span>Card</span><h3>${h(f[0])}</h3><code>${h(f[1])}</code><p>${h(f[2])}</p><small>${h(f[3])}</small></article>`).join("") || `<div class="card"><h3>No specific cards found</h3><p class="muted">Use the full Formula section for all cards.</p></div>`}
+    </div>
+  </div>`;
+}
+
+function renderFormulas(){
+  const query=(state.formulaQuery||"").toLowerCase();
+  const shown=FORMULAS.filter(f=>(f[0]+f[1]+f[2]+f[3]+(f[4]||"")).toLowerCase().includes(query));
+  app.innerHTML=`<div class="section v26FormulaPage">
+    ${card(`<div class="v26SectionHead"><h2>Formulas & Shortcuts</h2><p class="muted">Use this when you forgot the rule. Search the topic, formula, or shortcut.</p></div>
+      <input placeholder="Search formulas, shortcuts, laws, or rules..." value="${h(state.formulaQuery||"")}" oninput="state.formulaQuery=this.value; renderFormulas()">`)}
+    <div class="v26FormulaGrid">
+      ${shown.map(f=>`<article class="v26FormulaFull card">
+        <span class="pill">Formula</span>
+        <h3>${h(f[0])}</h3>
+        <code>${h(f[1])}</code>
+        <p><b>Use:</b> ${h(f[2])}</p>
+        <p><b>Shortcut:</b> ${h(f[3])}</p>
+        <p class="muted">${h(f[4]||"")}</p>
+      </article>`).join("")}
+    </div>
+  </div>`;
+}
+
 function render(){
   if(!state.quizStarted) exitFocusMode();
   renderTabs();
@@ -890,5 +1071,5 @@ function render(){
   if(state.tab==="progress")renderProgress();
   if(state.tab==="settings")renderSettings();
 }
-window.saveUserNote=saveUserNote;window.saveTopicPref=saveTopicPref;window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;window.toggleCompactMode=toggleCompactMode;window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.saveLibraryField=saveLibraryField;window.toggleLibraryCheck=toggleLibraryCheck;window.markTopicReviewed=markTopicReviewed;window.startSubtopicDrill=startSubtopicDrill;window.exportTopicNotes=exportTopicNotes;window.copyTopicNotes=copyTopicNotes;window.insertNoteTemplate=insertNoteTemplate;window.clearNoteField=clearNoteField;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
+window.saveUserNote=saveUserNote;window.saveTopicPref=saveTopicPref;window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;window.toggleCompactMode=toggleCompactMode;window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.saveLibraryField=saveLibraryField;window.toggleLibraryCheck=toggleLibraryCheck;window.markTopicReviewed=markTopicReviewed;window.startSubtopicDrill=startSubtopicDrill;window.exportTopicNotes=exportTopicNotes;window.copyTopicNotes=copyTopicNotes;window.insertNoteTemplate=insertNoteTemplate;window.clearNoteField=clearNoteField;window.startSubtopicDrillEncoded=startSubtopicDrillEncoded;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
 const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"light";document.documentElement.dataset.theme=savedTheme;if(profile().compactMode===true)document.body.classList.add("compactStudy");themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};render();
