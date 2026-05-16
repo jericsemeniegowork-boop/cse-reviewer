@@ -1303,6 +1303,62 @@ function renderLibraryCards(topicId){
   </div>`;
 }
 
+
+
+const DATA_COLORS=["#e889b6","#b79df2","#f5be6b","#f4a3c1","#d95f92","#73a7f2","#6ed0c3","#a7d98d"];
+
+function renderDataChartVisual(q){
+  const v=q.visualData || q.chart || q.dataVisual;
+  if(!v) return "";
+  const title=h(v.title || q.subtopic || "Data");
+  const labels=v.labels || [];
+  const values=(v.values || []).map(Number);
+  const total=values.reduce((a,b)=>a+b,0) || 1;
+  const colors=labels.map((_,i)=>DATA_COLORS[i%DATA_COLORS.length]);
+
+  if((v.type||"").includes("pie") || q.visualType==="pie"){
+    let angle=0;
+    const segments=values.map((val,i)=>{
+      const pct=(val/total)*100;
+      const start=angle;
+      angle+=pct*3.6;
+      return `${colors[i]} ${start}deg ${angle}deg`;
+    }).join(",");
+    return `<div class="dataVisualCard v29DataCard">
+      <h3>${title}</h3>
+      <div class="v29PieWrap">
+        <div class="v29Pie" style="background:conic-gradient(${segments})"></div>
+      </div>
+      <div class="v29Legend">
+        ${labels.map((label,i)=>{
+          const pct=Math.round(values[i]/total*100);
+          return `<div class="v29LegendRow"><span style="background:${colors[i]}"></span><b>${h(label)}</b><em>${h(String(values[i]))} (${pct}%)</em></div>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }
+
+  if((v.type||"").includes("bar") || q.visualType==="bar"){
+    const max=Math.max(...values,1);
+    return `<div class="dataVisualCard v29DataCard">
+      <h3>${title}</h3>
+      <div class="v29Bars">
+        ${labels.map((label,i)=>`<div class="v29BarRow"><b>${h(label)}</b><div><span style="width:${Math.round(values[i]/max*100)}%;background:${colors[i]}"></span></div><em>${h(String(values[i]))}</em></div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  return "";
+}
+
+const originalRenderVisualV29 = typeof renderVisual==="function" ? renderVisual : null;
+function renderVisual(q){
+  const dataChart=renderDataChartVisual(q);
+  if(dataChart) return dataChart;
+  if(q && q.visual) return `<div class="questionVisual">${q.visual}</div>`;
+  return originalRenderVisualV29 ? originalRenderVisualV29(q) : "";
+}
+
 function render(){
   if(!state.quizStarted) exitFocusMode();
   renderTabs();
