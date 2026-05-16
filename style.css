@@ -1999,3 +1999,691 @@ p,.muted,.small{
     min-height:330px !important;
   }
 }
+
+
+/* v27 Guided Mobile UI */
+.hero{display:none!important}
+
+:root{
+  --tap:48px;
+  --read:920px;
+}
+
+body{
+  padding-bottom:92px;
+}
+
+header{
+  backdrop-filter:none!important;
+}
+
+.topbar{
+  padding:10px 0;
+}
+
+.brand h1{
+  font-size:16px;
+}
+
+.brand p{
+  display:none;
+}
+
+.logo{
+  width:40px!important;
+  height:40px!important;
+  border-radius:14px!important;
+}
+
+.desktopTabs{
+  gap:6px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+
+.desktopTabs::-webkit-scrollbar{
+  display:none;
+}
+
+.tab{
+  white-space:nowrap;
+}
+
+/* Mobile nav: bigger, scrollable, easier to tap */
+.mobileNav{
+  display:flex!important;
+  gap:8px;
+  overflow-x:auto;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--border);
+  background:color-mix(in srgb,var(--bg) 94%, transparent);
+  backdrop-filter:blur(12px);
+  scrollbar-width:none;
+}
+
+.mobileNav::-webkit-scrollbar{
+  display:none;
+}
+
+.mobileNav button{
+  flex:0 0 74px;
+  min-height:58px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--muted);
+  font-weight:900;
+  font-size:11px;
+  box-shadow:0 4px 12px rgba(165,88,125,.07);
+}
+
+.mobileNav button span{
+  display:block;
+  font-size:19px;
+  line-height:1;
+  margin-bottom:5px;
+}
+
+.mobileNav button small{
+  font-size:11px;
+}
+
+.mobileNav button.active{
+  background:var(--brand);
+  color:white;
+  border-color:var(--brand);
+}
+
+.card{
+  box-shadow:0 6px 18px rgba(165,88,125,.07)!important;
+}
+
+/* Home */
+.v27Home{
+  max-width:1040px;
+  margin:auto;
+}
+
+.v27Welcome{
+  display:grid;
+  gap:14px;
+}
+
+@media(min-width:760px){
+  .v27Welcome{
+    grid-template-columns:1fr 220px;
+    align-items:center;
+  }
+}
+
+.v27Welcome h2{
+  margin:12px 0 8px;
+  font-size:clamp(24px,4vw,42px);
+  line-height:1.1;
+}
+
+.v27Today{
+  border:1px solid var(--border);
+  background:var(--soft);
+  border-radius:20px;
+  padding:14px;
+}
+
+.v27Today span{
+  color:var(--muted);
+  font-weight:900;
+  font-size:12px;
+}
+
+.v27Today strong{
+  display:block;
+  font-size:28px;
+  margin:4px 0 8px;
+}
+
+.v27QuickGrid{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+@media(min-width:820px){
+  .v27QuickGrid{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+
+.v27Quick{
+  min-height:132px;
+  text-align:left;
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:24px;
+  padding:16px;
+  color:var(--text);
+  box-shadow:0 6px 18px rgba(165,88,125,.07);
+  cursor:pointer;
+}
+
+.v27Quick.primary{
+  background:var(--brand);
+  color:white;
+  border-color:var(--brand);
+}
+
+.v27Quick span{
+  font-size:28px;
+  display:block;
+  margin-bottom:10px;
+}
+
+.v27Quick b{
+  display:block;
+  font-size:16px;
+}
+
+.v27Quick small{
+  display:block;
+  margin-top:6px;
+  color:inherit;
+  opacity:.82;
+  line-height:1.35;
+}
+
+.v27Flow{
+  display:grid;
+  gap:10px;
+}
+
+@media(min-width:720px){
+  .v27Flow{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+.v27Flow div{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--soft);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:12px;
+}
+
+.v27Flow b{
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  border-radius:12px;
+  background:var(--brand);
+  color:white;
+}
+
+.v27FocusList{
+  display:grid;
+  gap:10px;
+}
+
+.v27FocusList button{
+  display:grid;
+  grid-template-columns:44px 1fr;
+  gap:10px;
+  align-items:center;
+  text-align:left;
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:18px;
+  padding:12px;
+  color:var(--text);
+  cursor:pointer;
+}
+
+.v27FocusList span{
+  grid-row:span 2;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  width:44px;
+  height:44px;
+}
+
+.v27FocusList small{
+  color:var(--muted);
+  line-height:1.35;
+}
+
+.v27MiniStats{
+  display:grid;
+  gap:10px;
+  grid-template-columns:repeat(2,1fr);
+}
+
+@media(min-width:720px){
+  .v27MiniStats{
+    grid-template-columns:repeat(4,1fr);
+  }
+}
+
+.v27MiniStats div{
+  border:1px solid var(--border);
+  background:var(--soft);
+  border-radius:16px;
+  padding:12px;
+}
+
+.v27MiniStats span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+}
+
+.v27MiniStats strong{
+  display:block;
+  margin-top:4px;
+  font-size:20px;
+}
+
+/* Library */
+.v27LibraryShell{
+  display:grid;
+  gap:14px;
+  max-width:var(--read);
+  margin:auto;
+}
+
+.v27TopicHeader{
+  display:grid;
+  gap:12px;
+}
+
+@media(min-width:760px){
+  .v27TopicHeader{
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+  }
+}
+
+.v27TopicHeader h2{
+  margin:8px 0 4px;
+  font-size:clamp(24px,4vw,38px);
+  line-height:1.1;
+}
+
+.v27Back{
+  border:1px solid var(--border);
+  background:var(--soft);
+  color:var(--text);
+  border-radius:14px;
+  min-height:42px;
+  padding:0 12px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.v27TopicPicker{
+  display:grid;
+  gap:10px;
+}
+
+.v27TopicPicker select,
+.v27TopicPicker input{
+  min-height:46px;
+}
+
+.v27TopicPills{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding-bottom:2px;
+}
+
+.v27TopicPills::-webkit-scrollbar{
+  display:none;
+}
+
+.v27TopicPills button{
+  flex:0 0 auto;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  border-radius:999px;
+  padding:9px 12px;
+  font-weight:900;
+}
+
+.v27TopicPills button.active{
+  background:var(--brand);
+  color:white;
+  border-color:var(--brand);
+}
+
+.v27LibraryTabs{
+  position:sticky;
+  top:70px;
+  z-index:8;
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  background:color-mix(in srgb,var(--bg) 92%, transparent);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:8px;
+  scrollbar-width:none;
+}
+
+.v27LibraryTabs::-webkit-scrollbar{
+  display:none;
+}
+
+.libraryTab{
+  flex:0 0 auto;
+  min-height:42px;
+}
+
+.v27LibraryBody{
+  display:grid;
+  gap:14px;
+}
+
+.v27Notes,
+.v27Readable{
+  display:grid;
+  gap:14px;
+}
+
+.v27NoteIntro{
+  display:grid;
+  gap:12px;
+}
+
+.v27NoteIntro h3{
+  margin:0 0 6px;
+}
+
+@media(min-width:760px){
+  .v27NoteIntro{
+    grid-template-columns:1fr auto;
+    align-items:start;
+  }
+}
+
+.v27TemplateActions{
+  display:grid;
+  gap:8px;
+}
+
+@media(min-width:560px){
+  .v27TemplateActions{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+.v27MainNote{
+  min-height:440px!important;
+  font-size:15px!important;
+}
+
+.v27SmallNote{
+  min-height:240px!important;
+}
+
+.v27NoteActions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.v27NoteGrid{
+  display:grid;
+  gap:14px;
+}
+
+@media(min-width:760px){
+  .v27NoteGrid{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+.v27Reader .studyNoteBlock p{
+  font-size:16px;
+  line-height:1.8;
+}
+
+.v27Subtopics .subtopicRow{
+  background:var(--card);
+}
+
+.v27Checklist{
+  display:grid;
+  gap:10px;
+}
+
+.v27Checklist label{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:16px;
+  padding:12px;
+}
+
+/* Formulas */
+.v27FormulaPage{
+  max-width:1040px;
+  margin:auto;
+}
+
+.v27FormulaGrid{
+  display:grid;
+  gap:12px;
+}
+
+@media(min-width:760px){
+  .v27FormulaGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+.v27Formula h3{
+  margin:10px 0;
+}
+
+.v27Formula code{
+  display:block;
+  white-space:pre-wrap;
+  background:var(--soft);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  color:var(--text);
+  font-family:inherit;
+  line-height:1.6;
+}
+
+.v27Formula p{
+  line-height:1.6;
+}
+
+/* Mobile clarity */
+@media(max-width:640px){
+  .wrap{
+    padding-inline:12px;
+  }
+
+  header{
+    position:sticky;
+    top:0;
+  }
+
+  .desktopTabs{
+    display:none!important;
+  }
+
+  .v27QuickGrid{
+    grid-template-columns:1fr;
+  }
+
+  .v27Quick{
+    min-height:96px;
+    display:grid;
+    grid-template-columns:42px 1fr;
+    align-items:center;
+    column-gap:12px;
+  }
+
+  .v27Quick span{
+    grid-row:span 2;
+    margin:0;
+  }
+
+  .v27Quick small{
+    margin-top:2px;
+  }
+
+  .v27MainNote{
+    min-height:360px!important;
+  }
+
+  .card{
+    padding:14px!important;
+  }
+
+  .btn,
+  .v27Back{
+    width:auto;
+    min-height:46px;
+  }
+}
+
+
+/* v28 Formula Lessons */
+.v28FormulaPage{
+  max-width:1100px;
+  margin:auto;
+}
+
+.v28FormulaGrid{
+  display:grid;
+  gap:16px;
+}
+
+@media(min-width:920px){
+  .v28FormulaGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+.v28FormulaLesson,
+.v28FormulaMini{
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 6px 18px rgba(165,88,125,.07);
+}
+
+.v28FormulaTop h3{
+  margin:10px 0 12px;
+  font-size:22px;
+  line-height:1.2;
+}
+
+.v28Rule{
+  border:1px solid var(--border);
+  background:var(--soft);
+  border-radius:16px;
+  padding:12px;
+  font-weight:900;
+  line-height:1.6;
+  margin-bottom:14px;
+  white-space:pre-wrap;
+}
+
+.v28FormulaLesson section,
+.v28FormulaMini section{
+  border-top:1px solid var(--border);
+  padding-top:12px;
+  margin-top:12px;
+}
+
+.v28FormulaLesson h4,
+.v28FormulaMini h4{
+  margin:0 0 6px;
+  font-size:14px;
+  letter-spacing:-.02em;
+}
+
+.v28FormulaLesson p,
+.v28FormulaMini p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.v28FormulaLesson ol,
+.v28FormulaMini ol{
+  margin:0;
+  padding-left:0;
+  display:grid;
+  gap:8px;
+  list-style:none;
+}
+
+.v28FormulaLesson li,
+.v28FormulaMini li{
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.v28FormulaLesson li b,
+.v28FormulaMini li b{
+  color:var(--brand);
+  margin-right:4px;
+}
+
+.v28Mistake{
+  background:color-mix(in srgb,var(--soft) 70%, transparent);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px!important;
+}
+
+.v28FormulaLesson details{
+  margin-top:14px;
+  border:1px solid var(--border);
+  background:var(--soft);
+  border-radius:14px;
+  padding:10px 12px;
+}
+
+.v28FormulaLesson summary{
+  cursor:pointer;
+  font-weight:900;
+}
+
+.v28FormulaMini{
+  padding:16px;
+}
+
+.v28FormulaMini .v28FormulaTop h3{
+  font-size:19px;
+}
+
+@media(max-width:639px){
+  .v28FormulaLesson,
+  .v28FormulaMini{
+    padding:15px;
+    border-radius:20px;
+  }
+
+  .v28FormulaTop h3{
+    font-size:20px;
+  }
+}

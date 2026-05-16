@@ -37,7 +37,7 @@ let state = {
   topicQuery:"", formulaQuery:"", libraryQuery:"", difficulty:"", sectionTopic:"general",
   quizStarted:false, quizMode:"practice", quizPool:[], quizIndex:0,
   score:0, answered:0, chosen:null, responses:[], flashIndex:0, flashSide:"front",
-  timerEnd:null, timerLabel:"", libraryPanel:"overview"
+  timerEnd:null, timerLabel:"", libraryPanel:"notes"
 };
 
 let timerInterval = null;
@@ -287,8 +287,9 @@ function card(x,cls=""){return `<div class="card ${cls}">${x}</div>`}
 
 function setTab(tab){state.tab=tab;if(!["practice","activities"].includes(tab)) resetQuizState(false);render()}
 function renderTabs(){
+  const mobileLabel={dashboard:"Home",library:"Notes",formulas:"Formula",practice:"Quiz",activities:"Mock",progress:"Stats",settings:"Set"};
   desktopTabs.innerHTML=TABS.map(t=>`<button class="tab ${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')">${t[2]} ${t[1]}</button>`).join("");
-  mobileTabs.innerHTML=TABS.map(t=>`<button class="${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')"><span>${t[2]}</span><br>${t[1]}</button>`).join("");
+  mobileTabs.innerHTML=TABS.map(t=>`<button class="${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')" aria-label="${t[1]}"><span>${t[2]}</span><small>${mobileLabel[t[0]]||t[1]}</small></button>`).join("");
 }
 function formatTime(sec){sec=Math.max(0,sec);const m=Math.floor(sec/60),s=sec%60;return `${m}:${String(s).padStart(2,"0")}`}
 function startTimer(seconds,label){clearInterval(timerInterval);state.timerEnd=Date.now()+seconds*1000;state.timerLabel=label;timerInterval=setInterval(updateTimer,1000);updateTimer()}
@@ -1056,6 +1057,248 @@ function renderFormulas(){
         <p><b>Shortcut:</b> ${h(f[3])}</p>
         <p class="muted">${h(f[4]||"")}</p>
       </article>`).join("")}
+    </div>
+  </div>`;
+}
+
+
+
+function v27QuickButton(icon,title,desc,action,primary=false){
+  return `<button class="v27Quick ${primary?'primary':''}" onclick="${action}">
+    <span>${icon}</span>
+    <b>${title}</b>
+    <small>${desc}</small>
+  </button>`;
+}
+function renderDashboard(){
+  const p=profile();
+  const d=daysUntil(p.examDate);
+  const daily=dailyAnswered();
+  const goalPct=Math.min(100,Math.round((daily/(p.dailyGoal||1))*100));
+  const weak=weakestTopicIds();
+  app.innerHTML=`<div class="section v27Home">
+    ${card(`<div class="v27Welcome">
+      <div>
+        <span class="pill">Start here</span>
+        <h2>${p.name?`Hi, ${h(p.name)}.`:"Ready to review?"}</h2>
+        <p class="muted">${p.reminderText?h(p.reminderText):"Pick one path below. Notes, quiz, or formulas. No need to hunt around."}</p>
+      </div>
+      <div class="v27Today">
+        <span>Today</span>
+        <strong>${daily}/${p.dailyGoal}</strong>
+        <div class="progressBarLite"><div style="width:${goalPct}%"></div></div>
+      </div>
+    </div>`)}
+    <div class="v27QuickGrid">
+      ${v27QuickButton("📚","Study Notes","Open your topic notebook","state.libraryPanel='notes';setTab('library')",true)}
+      ${v27QuickButton("🎯","Quick Quiz","Start a guided drill","recommendedStart()")}
+      ${v27QuickButton("🧮","Formulas","Review shortcuts and rules","setTab('formulas')")}
+      ${v27QuickButton("📝","Mock Exam","Practice full exam mode","setTab('activities')")}
+    </div>
+    ${card(`<h3>Simple study flow</h3>
+      <div class="v27Flow">
+        <div><b>1</b><span>Read or write notes</span></div>
+        <div><b>2</b><span>Answer a focused drill</span></div>
+        <div><b>3</b><span>Save mistakes as rules</span></div>
+      </div>`)}
+    ${card(`<h3>Suggested focus</h3>
+      <p class="muted">These are based on your weak topics and saved progress.</p>
+      <div class="v27FocusList">
+        ${weak.slice(0,3).map(id=>{const t=topicById(id);return `<button onclick="state.activeTopic='${id}';state.noteTopic='${id}';state.libraryPanel='notes';setTab('library')"><span style="background:${t.color}">${t.icon}</span><b>${t.name}</b><small>${t.focus}</small></button>`}).join("")}
+      </div>`)}
+    ${card(`<h3>Progress at a glance</h3>
+      <div class="v27MiniStats">
+        <div><span>Questions</span><strong>${QUESTIONS.length}</strong></div>
+        <div><span>Accuracy</span><strong>${accuracy()}%</strong></div>
+        <div><span>Target</span><strong>${p.targetScore}%</strong></div>
+        <div><span>Exam</span><strong>${p.examType==="professional"?"Pro":"SubPro"}</strong></div>
+      </div>
+      <p class="small muted">${d===null?"Set an exam date in Settings if you want a countdown.":d>=0?`${d} days left until your set exam date.`:"Update your exam date in Settings."}</p>`)}
+  </div>`;
+}
+
+function v27TabButton(id,label){
+  return `<button class="libraryTab ${state.libraryPanel===id?'active':''}" onclick="state.libraryPanel='${id}';renderLibrary()">${label}</button>`;
+}
+function renderLibrary(){
+  const active = state.activeTopic || "numerical";
+  const query=(state.topicQuery||"").toLowerCase();
+  const filtered=TOPICS.filter(t=>(t.name+" "+t.focus).toLowerCase().includes(query));
+  const t=topicById(active);
+  const pref=getTopicPref(active);
+  const panel=state.libraryPanel||"notes";
+  const body = panel==="notes" ? renderLibraryNotes(active)
+    : panel==="guide" ? renderLibraryGuide(active)
+    : panel==="lessons" ? renderLibraryLessons(active)
+    : panel==="coverage" ? renderLibraryCoverage(active)
+    : panel==="cards" ? renderLibraryCards(active)
+    : renderLibraryNotes(active);
+
+  app.innerHTML=`<div class="v27LibraryShell">
+    <section class="v27TopicHeader card">
+      <button class="v27Back" onclick="setTab('dashboard')">← Home</button>
+      <div>
+        <span class="pill">${t.icon} Current topic</span>
+        <h2>${h(t.name)}</h2>
+        <p class="muted">${pref.reminder?`Reminder: ${h(pref.reminder)}`:h(t.focus)}</p>
+      </div>
+      <button class="btn secondary v27FormulaJump" onclick="setTab('formulas')">Formulas</button>
+    </section>
+
+    <section class="v27TopicPicker card">
+      <label class="small muted">Change topic</label>
+      <select onchange="state.activeTopic=this.value;state.noteTopic=this.value;state.libraryPanel='notes';renderLibrary()">
+        ${TOPICS.map(topic=>`<option value="${topic.id}" ${active===topic.id?'selected':''}>${topic.name}</option>`).join("")}
+      </select>
+      <input placeholder="Search topics..." value="${h(state.topicQuery||"")}" oninput="state.topicQuery=this.value;renderLibrary()">
+      <div class="v27TopicPills">
+        ${filtered.slice(0,9).map(topic=>`<button class="${active===topic.id?'active':''}" onclick="state.activeTopic='${topic.id}';state.noteTopic='${topic.id}';state.libraryPanel='notes';renderLibrary()">${topic.icon} ${topic.name.replace(" Ability","").replace("General Information","General")}</button>`).join("")}
+      </div>
+    </section>
+
+    <nav class="libraryTabs v27LibraryTabs">
+      ${v27TabButton("notes","Notes")}
+      ${v27TabButton("guide","Guide")}
+      ${v27TabButton("lessons","Lessons")}
+      ${v27TabButton("coverage","Coverage")}
+      ${v27TabButton("cards","Cards")}
+    </nav>
+
+    <section class="v27LibraryBody">${body}</section>
+  </div>`;
+}
+
+function renderLibraryNotes(topicId){
+  const d=libraryTopicData(topicId);
+  const pref=getTopicPref(topicId);
+  const templates=noteTemplates();
+  return `<div class="v27Notes">
+    ${card(`<div class="v27NoteIntro">
+      <div>
+        <h3>Write your reviewer here</h3>
+        <p class="muted">Use your own words. The best note is short enough to reread and clear enough to teach yourself later.</p>
+      </div>
+      <div class="v27TemplateActions">
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','study','notes')">Study template</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','mistake','mistakes')">Mistake template</button>
+        <button class="btn secondary" onclick="insertNoteTemplate('${topicId}','formula','rules')">Formula template</button>
+      </div>
+    </div>`)}
+    ${card(`<h3>Main Notes</h3>
+      <p class="small muted">Main idea, key rule, example, trap, memory hook.</p>
+      <textarea class="notesArea v27MainNote" placeholder="${h(templates.study.body)}" oninput="saveLibraryField('${topicId}','notes',this.value)">${h(d.notes||"")}</textarea>
+      <div class="v27NoteActions">
+        <button class="btn secondary" onclick="copyTopicNotes('${topicId}')">Copy notes</button>
+        <button class="btn secondary" onclick="exportTopicNotes('${topicId}')">Export .txt</button>
+        <button class="btn secondary" onclick="startTopicDrill('${topicId}')">Drill this topic</button>
+      </div>`)}
+    <div class="v27NoteGrid">
+      ${card(`<h3>Mistake Log</h3>
+        <p class="small muted">Write the exact rule you missed.</p>
+        <textarea class="notesArea v27SmallNote" placeholder="${h(templates.mistake.body)}" oninput="saveLibraryField('${topicId}','mistakes',this.value)">${h(d.mistakes||"")}</textarea>`)}
+      ${card(`<h3>Rules / Formulas</h3>
+        <p class="small muted">Keep this tight and easy to scan.</p>
+        <textarea class="notesArea v27SmallNote" placeholder="${h(templates.formula.body)}" oninput="saveLibraryField('${topicId}','rules',this.value)">${h(d.rules||"")}</textarea>`)}
+    </div>
+  </div>`;
+}
+
+function renderLibraryGuide(topicId){
+  return `<div class="v27Readable">
+    ${card(`<h3>Guide</h3><p class="muted">Read this once. Then write the parts you actually need in Notes.</p><div class="v27Reader">${renderStudyNotesBlock(topicId)}</div>`)}
+    ${card(`${renderTopicCustomizer(topicId)}`)}
+  </div>`;
+}
+
+function renderLibraryCoverage(topicId){
+  const rows=topicSubtopicRows(topicId);
+  const d=libraryTopicData(topicId);
+  const checklist=(window.CSE_DATA.libraryChecklists||{})[topicId]||[];
+  return `<div class="v27Readable">
+    ${card(`<h3>Subtopics</h3><p class="muted">Pick one smaller part if the topic feels too big.</p>
+      <div class="subtopicRows v27Subtopics">
+        ${rows.slice(0,12).map(([name,info])=>`<div class="subtopicRow"><div><b>${h(name)}</b><span>${info.total} items • Easy ${info.easy||0} • Medium ${info.medium||0} • Hard ${info.hard||0}</span></div><button class="btn secondary" onclick="startSubtopicDrillEncoded('${topicId}','${encodeURIComponent(name)}')">Drill</button></div>`).join("")}
+      </div>`)}
+    ${card(`<h3>Gentle checklist</h3><p class="muted">Not a task list. Just reminders for what to review.</p>
+      <div class="libraryChecklist v27Checklist">${checklist.map((x,i)=>`<label><input type="checkbox" ${d.checklist&&d.checklist[i]?"checked":""} onchange="toggleLibraryCheck('${topicId}',${i})"><span>${h(x)}</span></label>`).join("")}</div>`)}
+  </div>`;
+}
+
+function renderFormulas(){
+  const query=(state.formulaQuery||"").toLowerCase();
+  const shown=FORMULAS.filter(f=>(f[0]+f[1]+f[2]+f[3]+(f[4]||"")).toLowerCase().includes(query));
+  app.innerHTML=`<div class="section v27FormulaPage">
+    ${card(`<button class="v27Back" onclick="setTab('dashboard')">← Home</button><h2>Formulas & shortcuts</h2><p class="muted">Search the rule first, then practice it. This section is for quick recall.</p><input placeholder="Search formula, law, topic, shortcut..." value="${h(state.formulaQuery||"")}" oninput="state.formulaQuery=this.value; renderFormulas()">`)}
+    <div class="v27FormulaGrid">
+      ${shown.map(f=>`<article class="v27Formula card"><span class="pill">Rule</span><h3>${h(f[0])}</h3><code>${h(f[1])}</code><p><b>Use:</b> ${h(f[2])}</p><p><b>Shortcut:</b> ${h(f[3])}</p>${f[4]?`<p class="muted">${h(f[4])}</p>`:""}</article>`).join("")}
+    </div>
+  </div>`;
+}
+
+
+
+function formulaGuideFor(title){
+  const guides=(window.CSE_DATA&&window.CSE_DATA.formulaGuides)||{};
+  return guides[title] || {
+    meaning:"This rule helps solve this type of question more clearly.",
+    when:"Use it when the question matches this topic or asks for the same relationship.",
+    steps:["Identify the given values.","Choose the correct rule.","Solve carefully.","Check the final unit or wording."],
+    example:"Try a small example first, then apply the same logic to the question.",
+    mistake:"Do not memorize only the final answer. Learn when the rule applies."
+  };
+}
+function formulaLessonCard(f, compact=false){
+  const g=formulaGuideFor(f[0]);
+  const steps=(g.steps||[]).map((s,i)=>`<li><b>${i+1}.</b> ${h(s)}</li>`).join("");
+  return `<article class="${compact?'v28FormulaMini':'v28FormulaLesson card'}">
+    <div class="v28FormulaTop">
+      <span class="pill">Formula lesson</span>
+      <h3>${h(f[0])}</h3>
+    </div>
+    <div class="v28Rule">${h(f[1])}</div>
+    <section>
+      <h4>What it means</h4>
+      <p>${h(g.meaning)}</p>
+    </section>
+    <section>
+      <h4>When to use it</h4>
+      <p>${h(g.when)}</p>
+    </section>
+    <section>
+      <h4>Steps</h4>
+      <ol>${steps}</ol>
+    </section>
+    <section>
+      <h4>Example</h4>
+      <p>${h(g.example)}</p>
+    </section>
+    <section class="v28Mistake">
+      <h4>Common mistake</h4>
+      <p>${h(g.mistake)}</p>
+    </section>
+    ${compact?'':`<details><summary>Original shortcut card</summary><p><b>Use:</b> ${h(f[2]||"")}</p><p><b>Shortcut:</b> ${h(f[3]||"")}</p><p>${h(f[4]||"")}</p></details>`}
+  </article>`;
+}
+function renderFormulas(){
+  const query=(state.formulaQuery||"").toLowerCase();
+  const shown=FORMULAS.filter(f=>(f[0]+f[1]+f[2]+f[3]+(f[4]||"")).toLowerCase().includes(query));
+  app.innerHTML=`<div class="section v28FormulaPage">
+    ${card(`<button class="v27Back" onclick="setTab('dashboard')">← Home</button>
+      <h2>Formula Lessons</h2>
+      <p class="muted">Not just shortcuts. Each card explains what the rule means, when to use it, how to solve, and what mistake to avoid.</p>
+      <input placeholder="Search formula, law, topic, shortcut..." value="${h(state.formulaQuery||"")}" oninput="state.formulaQuery=this.value; renderFormulas()">`)}
+    <div class="v28FormulaGrid">
+      ${shown.map(f=>formulaLessonCard(f,false)).join("")}
+    </div>
+  </div>`;
+}
+function renderLibraryCards(topicId){
+  const cards=topicFormulaCards(topicId);
+  return `<div class="v26Stack">
+    ${card(`<div class="v26SectionHead"><h3>Formula Lessons</h3><p class="muted">These explain the rule, not just the shortcut. Use them before drilling.</p></div>
+      <button class="btn secondary" onclick="setTab('formulas')">Open full Formula Lessons</button>`)}
+    <div class="v28FormulaGrid">
+      ${cards.map(f=>formulaLessonCard(f,true)).join("") || `<div class="card"><h3>No specific formula lessons found</h3><p class="muted">Use the full Formula section for all lessons.</p></div>`}
     </div>
   </div>`;
 }
