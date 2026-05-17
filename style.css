@@ -2858,3 +2858,167 @@ header{
     padding-top:10px;
   }
 }
+
+
+/* v31 audited web/mobile stability polish */
+*{
+  box-sizing:border-box;
+}
+
+html{
+  -webkit-text-size-adjust:100%;
+  scroll-behavior:smooth;
+}
+
+body{
+  overflow-x:hidden;
+}
+
+img,svg,canvas,table{
+  max-width:100%;
+}
+
+main.wrap{
+  max-width:1180px;
+}
+
+.card{
+  overflow-wrap:anywhere;
+}
+
+.questionVisual,
+.visualCard,
+.dataVisualCard{
+  max-width:100%;
+  overflow-x:auto;
+}
+
+.visualCard{
+  line-height:1.55;
+}
+
+/* Static pie visuals: match conic-gradient colors exactly */
+.visualCard .legendRow:nth-child(1) span{background:#3b82f6!important}
+.visualCard .legendRow:nth-child(2) span{background:#14b8a6!important}
+.visualCard .legendRow:nth-child(3) span{background:#f59e0b!important}
+.visualCard .legendRow:nth-child(4) span{background:#a78bfa!important}
+.visualCard .legendRow:nth-child(5) span{background:#fb7185!important}
+
+.pie{
+  filter:none!important;
+}
+
+.v31DataCard{
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:22px;
+  padding:16px;
+}
+
+.v31Pie{
+  width:min(240px,68vw);
+  aspect-ratio:1;
+  border-radius:50%;
+  margin:8px auto 16px;
+  border:1px solid var(--border);
+}
+
+.v31Legend{
+  display:grid;
+  gap:10px;
+}
+
+.v31Legend div{
+  display:grid;
+  grid-template-columns:20px 1fr auto;
+  gap:8px;
+  align-items:center;
+}
+
+.v31Legend span{
+  width:14px;
+  height:14px;
+  border-radius:4px;
+}
+
+.v31Legend em{
+  font-style:normal;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+/* Better mobile quiz reading */
+@media(max-width:640px){
+  .wrap{
+    padding-inline:12px;
+  }
+
+  .card{
+    border-radius:22px!important;
+    padding:14px!important;
+  }
+
+  .questionText,
+  .quizCard h2,
+  .questionCard h2{
+    line-height:1.24!important;
+  }
+
+  .choice{
+    min-height:62px!important;
+    border-radius:18px!important;
+    padding:14px!important;
+  }
+
+  .choiceLetter{
+    flex:0 0 40px!important;
+    width:40px!important;
+    height:40px!important;
+  }
+
+  .pieGrid{
+    grid-template-columns:1fr!important;
+    justify-items:center;
+  }
+
+  .legend{
+    width:100%;
+  }
+
+  .legendRow{
+    font-size:14px!important;
+    grid-template-columns:18px 1fr auto!important;
+  }
+
+  .barRow{
+    grid-template-columns:54px 1fr 42px!important;
+    gap:8px!important;
+  }
+
+  .tableWrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .dataTable{
+    min-width:420px;
+  }
+
+  .mobileNav button{
+    touch-action:manipulation;
+  }
+}
+
+/* Reduce layout jump and improve tap behavior */
+button,
+.btn,
+.choice,
+.tab{
+  touch-action:manipulation;
+}
+
+textarea,
+input,
+select{
+  font-size:16px;
+}

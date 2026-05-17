@@ -117,6 +117,10 @@ function topicSubtopicRows(topicId){
 function escAttr(s){return h(s).replace(/'/g,"&#39;")}
 function startSubtopicDrill(topicId, subtopic){
   const pool=QUESTIONS.filter(q=>q.topic===topicId && (q.subtopic||"General")===subtopic);
+  if(!pool.length){
+    alert("No questions found for this subtopic yet.");
+    return;
+  }
   state.quizMode=`${topicById(topicId).name}: ${subtopic}`;
   state.quizStarted=true;
   state.quizPool=balancedPick(pool,Math.min(20,pool.length),{mode:"subtopic-"+topicId+"-"+subtopic});
@@ -1351,12 +1355,76 @@ function renderDataChartVisual(q){
   return "";
 }
 
-const originalRenderVisualV29 = typeof renderVisual==="function" ? renderVisual : null;
 function renderVisual(q){
+  if(!q) return "";
   const dataChart=renderDataChartVisual(q);
   if(dataChart) return dataChart;
-  if(q && q.visual) return `<div class="questionVisual">${q.visual}</div>`;
-  return originalRenderVisualV29 ? originalRenderVisualV29(q) : "";
+  if(q.visual) return `<div class="questionVisual">${q.visual}</div>`;
+  return "";
+}
+
+
+
+/* v31 stable safety overrides */
+function renderVisual(q){
+  if(!q) return "";
+  const v=q.visualData || q.chart || q.dataVisual;
+  if(v && (v.labels||[]).length && (v.values||[]).length){
+    const colors=["#3b82f6","#14b8a6","#f59e0b","#a78bfa","#fb7185","#73a7f2"];
+    const labels=v.labels || [];
+    const values=(v.values || []).map(Number);
+    const total=values.reduce((a,b)=>a+b,0) || 1;
+    if((v.type||"").includes("pie")){
+      let angle=0;
+      const seg=values.map((val,i)=>{
+        const deg=(val/total)*360, start=angle;
+        angle+=deg;
+        return `${colors[i%colors.length]} ${start}deg ${angle}deg`;
+      }).join(",");
+      return `<div class="dataVisualCard v31DataCard"><h3>${h(v.title||"Data Chart")}</h3><div class="v31Pie" style="background:conic-gradient(${seg})"></div><div class="v31Legend">${labels.map((lab,i)=>`<div><span style="background:${colors[i%colors.length]}"></span><b>${h(lab)}</b><em>${values[i]} (${Math.round(values[i]/total*100)}%)</em></div>`).join("")}</div></div>`;
+    }
+  }
+  if(q.visual) return `<div class="questionVisual">${q.visual}</div>`;
+  return "";
+}
+function startTopicDrill(topicId){
+  const pool=QUESTIONS.filter(q=>q.topic===topicId);
+  if(!pool.length){
+    app.innerHTML=`<div class="section">${card(`<h2>No questions found</h2><p class="muted">This topic has no questions yet. Choose another topic.</p><button class="btn" onclick="setTab('library')">Back to Library</button>`)}</div>`;
+    return;
+  }
+  const qs=balancedPick(pool,Math.min(20,pool.length),{mode:"topic-"+topicId});
+  const topic=topicById(topicId);
+  state.quizStarted=true;
+  state.quizMode=`${topic.name} Drill`;
+  state.quizPool=qs;
+  state.quizIndex=0;
+  state.score=0;
+  state.answered=0;
+  state.chosen=null;
+  state.responses=[];
+  setTabNoReset("practice");
+  renderQuiz();
+}
+function startSubtopicDrill(topicId, subtopic){
+  const pool=QUESTIONS.filter(q=>q.topic===topicId && (q.subtopic||"General")===subtopic);
+  if(!pool.length){
+    app.innerHTML=`<div class="section">${card(`<h2>No questions found</h2><p class="muted">This subtopic has no questions yet. Choose another subtopic.</p><button class="btn" onclick="setTab('library')">Back to Library</button>`)}</div>`;
+    return;
+  }
+  state.quizMode=`${topicById(topicId).name}: ${subtopic}`;
+  state.quizStarted=true;
+  state.quizPool=balancedPick(pool,Math.min(20,pool.length),{mode:"subtopic-"+topicId+"-"+subtopic});
+  state.quizIndex=0;
+  state.score=0;
+  state.answered=0;
+  state.chosen=null;
+  state.responses=[];
+  setTabNoReset("practice");
+  renderQuiz();
+}
+function startSubtopicDrillEncoded(topicId, encodedName){
+  startSubtopicDrill(topicId, decodeURIComponent(encodedName));
 }
 
 function render(){
