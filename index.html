@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CSE Review Studio v31 — Audited Stable</title>
-<meta name="description" content="Mobile-friendly Civil Service Exam reviewer with notes, formulas, drills, mocks, and progress tracking." />
+<title>CSE Review Studio v32 — Team Lyqa Aligned</title>
+<meta name="description" content="Mobile-friendly Civil Service Exam reviewer with notes, formulas, drills, mocks, progress tracking, and Team Lyqa 10-week study guide." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,32 +15,36 @@
   <div class="topbar">
     <div class="brand">
       <div class="logo"><span>CSE</span></div>
-      <div><h1>CSE Review Studio</h1><p>Notes • formulas • drills</p></div>
+      <div><h1>CSE Review Studio</h1><p>Team Lyqa Aligned · v32</p></div>
     </div>
-    <button class="iconBtn" id="themeBtn">☀️</button>
+    <div class="headerRight">
+      <button class="iconBtn examToggleBtn" id="examTypeBtn" title="Toggle exam type">PRO</button>
+      <button class="iconBtn" id="themeBtn">🌙</button>
+    </div>
   </div>
   <nav class="desktopTabs" id="desktopTabs"></nav>
 </header>
 <main class="wrap">
-  <section class="hero">
+  <section class="hero" id="heroSection">
     <div class="heroInner">
       <div>
-        <span class="pill premium-pill">Full-coverage practice studio</span>
-        <h2>A soft and organized review space for focused CSE practice.</h2>
-        <p>Practice with full mocks, focused drills, progress tracking, formula cards, and clean activity screens designed for steady review.</p>
+        <span class="pill premium-pill">Team Lyqa 2025 · 10-Week Guide Aligned</span>
+        <h2>Your organized space for focused CSE preparation.</h2>
+        <p>Drills, mocks, formula cards, mistake logs, and a weekly study guide based on Team Lyqa's 2025 Review Outline.</p>
       </div>
       <div class="heroGrid">
-        <div class="heroStat"><strong>1129</strong><span>scored questions</span></div>
-        <div class="heroStat"><strong>25</strong><span>EDQ items</span></div>
+        <div class="heroStat"><strong>1169+</strong><span>scored questions</span></div>
+        <div class="heroStat"><strong>10</strong><span>study weeks</span></div>
         <div class="heroStat"><strong>170</strong><span>Pro mock length</span></div>
         <div class="heroStat"><strong>165</strong><span>SubPro mock length</span></div>
       </div>
     </div>
   </section>
   <section id="app"></section>
-  </main>
+</main>
 <nav class="mobileNav" id="mobileTabs"></nav>
 <script src="data.js"></script>
+<script src="questions-patch.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
