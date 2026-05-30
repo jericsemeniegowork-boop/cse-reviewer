@@ -1427,165 +1427,178 @@ function startSubtopicDrillEncoded(topicId, encodedName){
   startSubtopicDrill(topicId, decodeURIComponent(encodedName));
 }
 
+
+/* ── render (supports 'plan' tab) ── */
 function render(){
   if(!state.quizStarted) exitFocusMode();
   renderTabs();
-  if(state.tab==="dashboard")renderDashboard();
-  else if(state.tab==="plan")renderStudyPlan();
-  else if(state.tab==="library")renderLibrary();
-  else if(state.tab==="formulas")renderFormulas();
-  else if(state.tab==="practice")renderPractice();
-  else if(state.tab==="activities")renderActivities();
-  else if(state.tab==="progress")renderProgress();
-  else if(state.tab==="settings")renderSettings();
+  const t=state.tab;
+  if(t==="dashboard")   renderDashboard();
+  else if(t==="plan")   renderStudyPlan();
+  else if(t==="library")renderLibrary();
+  else if(t==="formulas")renderFormulas();
+  else if(t==="practice")renderPractice();
+  else if(t==="activities")renderActivities();
+  else if(t==="progress")renderProgress();
+  else if(t==="settings")renderSettings();
 }
-window.saveUserNote=saveUserNote;window.saveTopicPref=saveTopicPref;window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;window.toggleCompactMode=toggleCompactMode;window.quitActivity=quitActivity;window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;window.startReadingDrill=startReadingDrill;window.saveLibraryField=saveLibraryField;window.toggleLibraryCheck=toggleLibraryCheck;window.markTopicReviewed=markTopicReviewed;window.startSubtopicDrill=startSubtopicDrill;window.exportTopicNotes=exportTopicNotes;window.copyTopicNotes=copyTopicNotes;window.insertNoteTemplate=insertNoteTemplate;window.clearNoteField=clearNoteField;window.startSubtopicDrillEncoded=startSubtopicDrillEncoded;window.setTab=setTab;window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;window.toggleTopic=toggleTopic;window.startPractice=startPractice;window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;window.renderSettings=renderSettings;window.saveSettings=saveSettings;window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;window.exportProgress=exportProgress;window.state=state;
-// Theme + init (render called after v32 patch loads)
-const themeBtn=document.getElementById("themeBtn");const savedTheme=localStorage.getItem("theme")||"light";document.documentElement.dataset.theme=savedTheme;if(profile().compactMode===true)document.body.classList.add("compactStudy");themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";themeBtn.onclick=()=>{const next=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("theme",next);themeBtn.textContent=next==="dark"?"☀️":"🌙"};
 
-/* ===================================================
-   v32 — Team Lyqa Study Guide, Dashboard, Activities
-   render() is called at the very end after all defs
-   =================================================== */
-
-const LYQA_WEEKS = [
-  { week:1, color:"#2563eb", title:"Number Operations & Word Fundamentals",
-    mathFund:["Types & Properties of Numbers","Number Operations","Integers","Absolute Values","Decimals"],
-    practicalMath:["Solving Word Problems","Dealing with Remainders","Tagalize it!","Time Problems","GCF Word Problems","LCM Word Problems"],
-    language:["Vocabulary-Building","Word Construction","Affixes","Idiomacy","Reading Comprehension"],
-    logic:["Filing Rules"], drillTopics:["numerical","clerical","verbal"] },
-  { week:2, color:"#16a34a", title:"Divisibility, Fractions & Parts of Speech",
-    mathFund:["Divisibility Rules","Fractions","Ratio Rotation"],
-    practicalMath:["Types of Proportion","Ratio Word Problems","Changing Ratios","Partitive Proportion","Ratio & Inheritance Word Problems"],
-    language:["Parts of Speech","Nouns","Pronouns","Prepositions","Phrasal Verbs","Qualifiers"],
-    logic:["Spelling Tips"], drillTopics:["numerical","verbal","clerical"] },
-  { week:3, color:"#0891b2", title:"Percentages, Discounts & Confusing Words",
-    mathFund:["Percentages"],
-    practicalMath:["Comparing Fractions","Ruler Technique","Percentage Word Problems","Percentage Change","Discounts and Mark Ups","Investments and Interest"],
-    language:["Bring vs Take","Say vs Tell","Lay vs Lie","If vs When","Come vs Go","Lend vs Borrow","In Behalf vs On Behalf"],
-    logic:["Visual-Spatial / Abstract Reasoning"], drillTopics:["numerical","verbal","abstract"] },
-  { week:4, color:"#d97706", title:"Exponents, Logarithms & SVA",
-    mathFund:["Exponents","Scientific Notation","Radicals","Logarithms"],
-    practicalMath:["Backtracking","Meter Reading and Bill Computation"],
-    language:["Sentences","Subject-Verb Agreement","Pronoun-Antecedent Agreement","Active and Passive Voice"],
-    logic:["Verbal Analogy","Animal Group Names"], drillTopics:["numerical","verbal","analytical"] },
-  { week:5, color:"#6d28d9", title:"Algebra, Motion Problems & Tenses",
-    mathFund:["Equation Construction","Algebra: Finding x and y"],
-    practicalMath:["Consecutive Numbers","Motion Problems (Traditional Method)","Motion Problems (Speed Technique)"],
-    language:["Tenses","Modals","Had/Has/Have","Do/Does/Did","Go/Goes/Going/Gone/Went"],
-    logic:["Number Series"], drillTopics:["numerical","verbal","abstract"] },
-  { week:6, color:"#f59e0b", title:"Inequalities, Age/Money Problems & Homophones",
-    mathFund:["Inequalities"],
-    practicalMath:["Age Problems","Money Problems","Number Problems","Animal Heads and Feet"],
-    language:["Homophone Horrors","Capitalization Rules"],
-    logic:["Data Sufficiency: ALL","Data Sufficiency: SOME"], drillTopics:["numerical","verbal","sufficiency"] },
-  { week:7, color:"#059669", title:"Unit Conversion, Work/Mixture Problems & Filipino",
-    mathFund:["Converting Units of Measure"],
-    practicalMath:["Gaussian Series","Salary Word Problems","Mixture Problems","Work Problems","Work-Ratio Problem","Pipe Word Problems"],
-    language:["Common Pitfalls in Filipino","Nang o Ng","Din-Rin/Daw-Raw","Naka o Nakaka","Paggamit ng Gitling"],
-    logic:["Data Sufficiency: ONLY","Data Sufficiency: NO/NONE"], drillTopics:["numerical","filipino","sufficiency"] },
-  { week:8, color:"#7c3aed", title:"Geometry, Distance & Context Clues",
-    mathFund:["Geometry","Angles","Area, Perimeter, Volume & Surface Area","Pythagorean Theorem"],
-    practicalMath:["Distance with Directions","Shadow Problems","Algebra in Geometry Problems"],
-    language:["Arranging Adjectives","Punctuations","Reading Comprehension","Context Clues"],
-    logic:["Assumptions and Conclusions"], drillTopics:["numerical","verbal","analytical"] },
-  { week:9, color:"#e11d48", title:"Statistics, Permutations & Comparatives",
-    mathFund:["Statistics","Weighted Mean"],
-    practicalMath:["Permutation and Combination"],
-    language:["Comparatives and Superlatives","Paragraph Organization"],
-    logic:["Order and Ranking","Logic Puzzles","Days in a Week"], drillTopics:["numerical","verbal","analytical"] },
-  { week:10, color:"#0284c7", title:"Graphs, Probability & Sentence Correction",
-    mathFund:["Graphs and Tables"],
-    practicalMath:["Probability","Word Problems on Averages"],
-    language:["Sentence Correction","Redundancy Error","Double Negatives","Modifiers","Parallel Structure","Tag Questions"],
-    logic:["Venn Diagram"], drillTopics:["data","verbal","analytical"] }
+/* ── Tabs definition (7 tabs including Plan) ── */
+const TABS_ALL=[
+  ["dashboard","Home","🏠"],["plan","Plan","📅"],["library","Library","📚"],
+  ["formulas","Formulas","🧮"],["activities","Mocks","📝"],
+  ["progress","Progress","📈"],["settings","Settings","⚙️"]
 ];
-window.LYQA_WEEKS = LYQA_WEEKS;
-
-function weekCheckedItems(week){return load("weekChecked_"+week,{})}
-function toggleWeekItem(week,section,idx){
-  const d=weekCheckedItems(week), key=section+"_"+idx;
-  d[key]=!d[key]; save("weekChecked_"+week,d); renderStudyPlan();
+function renderTabs(){
+  const ml={dashboard:"Home",plan:"Plan",library:"Notes",formulas:"Formula",activities:"Mock",progress:"Stats",settings:"Set"};
+  desktopTabs.innerHTML=TABS_ALL.map(t=>`<button class="tab ${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')">${t[2]} ${t[1]}</button>`).join("");
+  mobileTabs.innerHTML=TABS_ALL.map(t=>`<button class="${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')" aria-label="${t[1]}"><span>${t[2]}</span><small>${ml[t[0]]||t[1]}</small></button>`).join("");
 }
+function setTab(tab){state.tab=tab;if(!["practice","activities"].includes(tab))resetQuizState(false);render();}
+
+/* ── Team Lyqa 10-Week Data ── */
+const LYQA_WEEKS=[
+  {week:1,color:"#1e3a5f",title:"Number Operations & Word Fundamentals",
+   mathFund:["Types & Properties of Numbers","Number Operations","Integers","Absolute Values","Decimals"],
+   practicalMath:["Solving Word Problems","Dealing with Remainders","Tagalize it!","Time Problems","GCF Word Problems","LCM Word Problems"],
+   language:["Vocabulary-Building","Word Construction","Affixes","Idiomacy","Reading Comprehension"],
+   logic:["Filing Rules"],drillTopics:["numerical","clerical","verbal"]},
+  {week:2,color:"#16a34a",title:"Divisibility, Fractions & Parts of Speech",
+   mathFund:["Divisibility Rules","Fractions","Ratio Rotation"],
+   practicalMath:["Types of Proportion","Ratio Word Problems","Changing Ratios","Partitive Proportion","Ratio & Inheritance Word Problems"],
+   language:["Parts of Speech","Nouns","Pronouns","Prepositions","Phrasal Verbs","Qualifiers"],
+   logic:["Spelling Tips"],drillTopics:["numerical","verbal","clerical"]},
+  {week:3,color:"#0891b2",title:"Percentages, Discounts & Confusing Words",
+   mathFund:["Percentages"],
+   practicalMath:["Comparing Fractions","Ruler Technique","Percentage Word Problems","Percentage Change","Discounts and Mark Ups","Investments and Interest"],
+   language:["Bring vs Take","Say vs Tell","Lay vs Lie","If vs When","Come vs Go","Lend vs Borrow","In Behalf vs On Behalf"],
+   logic:["Visual-Spatial / Abstract Reasoning"],drillTopics:["numerical","verbal","abstract"]},
+  {week:4,color:"#d97706",title:"Exponents, Logarithms & Subject-Verb Agreement",
+   mathFund:["Exponents","Scientific Notation","Radicals","Logarithms"],
+   practicalMath:["Backtracking","Meter Reading and Bill Computation"],
+   language:["Sentences","Subject-Verb Agreement","Pronoun-Antecedent Agreement","Active and Passive Voice"],
+   logic:["Verbal Analogy","Animal Group Names"],drillTopics:["numerical","verbal","analytical"]},
+  {week:5,color:"#7c3aed",title:"Algebra, Motion Problems & Tenses",
+   mathFund:["Equation Construction","Algebra: Finding x and y"],
+   practicalMath:["Consecutive Numbers","Motion Problems (Traditional Method)","Motion Problems: Speed Technique"],
+   language:["Tenses","Modals","Had/Has/Have","Do/Does/Did","Go/Goes/Going/Gone/Went"],
+   logic:["Number Series"],drillTopics:["numerical","verbal","abstract"]},
+  {week:6,color:"#f59e0b",title:"Inequalities, Age/Money Problems & Homophones",
+   mathFund:["Inequalities"],
+   practicalMath:["Age Problems","Money Problems","Number Problems","Animal Heads and Feet"],
+   language:["Homophone Horrors","Capitalization Rules"],
+   logic:["Data Sufficiency: ALL","Data Sufficiency: SOME"],drillTopics:["numerical","verbal","sufficiency"]},
+  {week:7,color:"#059669",title:"Unit Conversion, Work/Mixture Problems & Filipino",
+   mathFund:["Converting Units of Measure"],
+   practicalMath:["Gaussian Series","Salary Word Problems","Mixture Problems","Work Problems","Work-Ratio Problem","Pipe Word Problems"],
+   language:["Common Pitfalls in Filipino","Nang o Ng","Din-Rin/Daw-Raw","Naka o Nakaka","Paggamit ng Gitling","Sila/Sina/Nila/Nina"],
+   logic:["Data Sufficiency: ONLY","Data Sufficiency: NO/NONE"],drillTopics:["numerical","filipino","sufficiency"]},
+  {week:8,color:"#7c3aed",title:"Geometry, Distance & Context Clues",
+   mathFund:["Geometry","Angles","Area, Perimeter, Volume & Surface Area","Pythagorean Theorem"],
+   practicalMath:["Distance with Directions","Shadow Problems","Triangle 3-4-5","Algebra in Geometry Problems"],
+   language:["Arranging Adjectives","Punctuations","Reading Comprehension","Context Clues"],
+   logic:["Assumptions and Conclusions"],drillTopics:["numerical","verbal","analytical"]},
+  {week:9,color:"#e11d48",title:"Statistics, Permutations & Comparatives",
+   mathFund:["Statistics","Weighted Mean"],
+   practicalMath:["Permutation and Combination"],
+   language:["Comparatives and Superlatives","Paragraph Organization: Speed Techniques"],
+   logic:["Order and Ranking","Logic Puzzles","Days in a Week"],drillTopics:["numerical","verbal","analytical"]},
+  {week:10,color:"#0284c7",title:"Graphs, Probability & Sentence Correction",
+   mathFund:["Graphs and Tables"],
+   practicalMath:["Probability","Word Problems on Averages"],
+   language:["Sentence Correction","Redundancy Error","Double Negatives","Modifiers","Parallel Structure","Tag Questions"],
+   logic:["Venn Diagram"],drillTopics:["data","verbal","analytical"]}
+];
+window.LYQA_WEEKS=LYQA_WEEKS;
+
+function weekCheckedItems(w){return load("weekChecked_"+w,{})}
+function toggleWeekItem(w,sec,idx){const d=weekCheckedItems(w),k=sec+"_"+idx;d[k]=!d[k];save("weekChecked_"+w,d);renderStudyPlan();}
 function weekProgress(wd){
   const d=weekCheckedItems(wd.week);
   const all=[...(wd.mathFund||[]).map((_,i)=>"mathFund_"+i),...(wd.practicalMath||[]).map((_,i)=>"practicalMath_"+i),...(wd.language||[]).map((_,i)=>"language_"+i),...(wd.logic||[]).map((_,i)=>"logic_"+i)];
-  return {done:all.filter(k=>d[k]).length, total:all.length};
+  return{done:all.filter(k=>d[k]).length,total:all.length};
 }
+
+/* ── Study Plan ── */
 function renderStudyPlan(){
   const curWeek=load("currentWeek",1);
-  const weekData=LYQA_WEEKS.find(w=>w.week===curWeek)||LYQA_WEEKS[0];
+  const wd=LYQA_WEEKS.find(w=>w.week===curWeek)||LYQA_WEEKS[0];
   const checked=weekCheckedItems(curWeek);
-  const prog=weekProgress(weekData);
+  const prog=weekProgress(wd);
   const pct=prog.total?Math.round(prog.done/prog.total*100):0;
-  const sections=[
-    {key:"mathFund",label:"📐 Math Fundamentals",items:weekData.mathFund},
-    {key:"practicalMath",label:"🔢 Practical Math",items:weekData.practicalMath},
-    {key:"language",label:"📖 Language",items:weekData.language},
-    {key:"logic",label:"🧠 Logic",items:weekData.logic}
+  const secs=[
+    {key:"mathFund",label:"📐 Math Fundamentals",items:wd.mathFund},
+    {key:"practicalMath",label:"🔢 Practical Math",items:wd.practicalMath},
+    {key:"language",label:"📖 Language",items:wd.language},
+    {key:"logic",label:"🧠 Logic",items:wd.logic}
   ];
   app.innerHTML=`<div class="studyPlanPage">
-    <div class="card">
-      <span class="pill">📅 Team Lyqa 2025 — 10-Week Guide</span>
-      <h2 style="margin-top:12px;margin-bottom:4px">Week ${curWeek}: ${h(weekData.title)}</h2>
-      <p class="muted">Check off topics as you study them. Progress is saved locally.</p>
-      <div style="margin:14px 0">
-        <div class="weekProgress">
-          <div class="weekProgressBar" style="flex:1"><div style="width:${pct}%"></div></div>
-          <span class="weekProgressLabel">${prog.done}/${prog.total} topics</span>
-        </div>
+  <div class="card">
+    <span class="pill gold premium-pill">Team Lyqa 2025 · 10-Week Review Guide</span>
+    <h2 style="margin-top:14px">Week ${curWeek}: ${h(wd.title)}</h2>
+    <p class="muted" style="margin:6px 0 16px">Tap any topic to mark it done. Your progress is saved automatically.</p>
+    <div class="weekProgress" style="margin-bottom:16px">
+      <div class="weekProgressBar"><div style="width:${pct}%"></div></div>
+      <span class="weekProgressLabel">${prog.done}/${prog.total}</span>
+    </div>
+    <div class="weekNav">
+      ${LYQA_WEEKS.map(w=>{const p=weekProgress(w);const done=p.total>0&&p.done===p.total;return`<button class="weekNavBtn ${w.week===curWeek?'active':''} ${done&&w.week!==curWeek?'done':''}" onclick="save('currentWeek',${w.week});renderStudyPlan()">W${w.week}</button>`;}).join("")}
+    </div>
+  </div>
+  <div class="weekCard">
+    <div class="weekCardHead">
+      <div class="weekBadge" style="background:${wd.color}">W${curWeek}</div>
+      <div>
+        <div style="font-weight:800;font-size:16px">${h(wd.title)}</div>
+        <div class="small muted">Week ${curWeek} of 10 · Tap topics below to check off</div>
       </div>
-      <div class="weekNav">
-        ${LYQA_WEEKS.map(w=>{const p=weekProgress(w);const done=p.done===p.total&&p.total>0;return `<button class="weekNavBtn ${w.week===curWeek?'active':''} ${done&&w.week!==curWeek?'done':''}" onclick="save('currentWeek',${w.week});renderStudyPlan()">W${w.week}</button>`;}).join("")}
+      <div style="text-align:right">
+        <div style="font-size:26px;font-weight:800;color:${wd.color}">${pct}%</div>
+        <div class="small muted">${prog.done}/${prog.total} done</div>
       </div>
     </div>
-    <div class="weekCard">
-      <div class="weekCardHead">
-        <div class="weekBadge" style="background:${weekData.color}">W${curWeek}</div>
-        <div>
-          <div style="font-weight:700;font-size:16px">${h(weekData.title)}</div>
-          <div class="small muted">Team Lyqa 2025 Review Outline • Week ${curWeek} of 10</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:22px;font-weight:800;color:${weekData.color}">${pct}%</div>
-          <div class="small muted">done</div>
-        </div>
+    <div class="weekCardBody">
+      <div class="weekColumns">
+        ${secs.map(s=>`<div class="weekColumn">
+          <div class="weekColumnHead" style="color:${wd.color}">${s.label}</div>
+          <div class="weekTopicList">
+            ${(s.items||[]).map((item,i)=>{const k=s.key+"_"+i;const done=!!checked[k];return`<div class="weekTopicItem ${done?'checked':''}" onclick="toggleWeekItem(${curWeek},'${s.key}',${i})">${done?'✓ ':''}${h(item)}</div>`;}).join("")}
+          </div>
+        </div>`).join("")}
       </div>
-      <div class="weekCardBody">
-        <div class="weekColumns">
-          ${sections.map(s=>`<div class="weekColumn">
-            <div class="weekColumnHead" style="color:${weekData.color}">${s.label}</div>
-            <div class="weekTopicList">
-              ${(s.items||[]).map((item,i)=>{const key=s.key+"_"+i;const done=!!checked[key];return `<div class="weekTopicItem ${done?'checked':''}" style="cursor:pointer" onclick="toggleWeekItem(${curWeek},'${s.key}',${i})">${done?'✓ ':''}${h(item)}</div>`;}).join("")}
-            </div>
-          </div>`).join("")}
-        </div>
-        <div class="weekDrillBar">
-          ${(weekData.drillTopics||[]).map(tid=>{const t=topicById(tid);return `<button class="weekDrillBtn" onclick="startTopicDrill('${tid}')">Drill: ${t.name.replace(" Ability","")}</button>`;}).join("")}
-          <button class="weekDrillBtn primary" onclick="startMathVariantDrill()">⚡ Math Variant Drill</button>
-        </div>
+      <div class="weekDrillBar">
+        ${(wd.drillTopics||[]).map(tid=>{const t=topicById(tid);return`<button class="weekDrillBtn" onclick="startTopicDrill('${tid}')">Drill: ${t.name.replace(" Ability","")}</button>`;}).join("")}
+        <button class="weekDrillBtn primary" onclick="startMathVariantDrill()">⚡ Math Variant Drill</button>
       </div>
     </div>
-    ${card(`<h3>Weekly Study Flow</h3><div class="v27Flow"><div><b>1</b><span>Check the topics above. Read notes for each in the Library.</span></div><div><b>2</b><span>Do the focused drill for each section.</span></div><div><b>3</b><span>Log mistakes in your Library notes.</span></div><div><b>4</b><span>Check off topics you feel confident about.</span></div><div><b>5</b><span>Move to the next week when you reach 60%+ completion.</span></div></div>`)}
+  </div>
+  ${card(`<h3>How to use this guide</h3><div class="v27Flow">
+    <div><b>1</b><span>Read Library notes for each topic in the week.</span></div>
+    <div><b>2</b><span>Drill the listed topics. Use the buttons above.</span></div>
+    <div><b>3</b><span>Log mistakes in the Library's Mistake Log.</span></div>
+    <div><b>4</b><span>Check off each topic after reviewing.</span></div>
+    <div><b>5</b><span>Move to the next week when you're at 60%+.</span></div>
+  </div>`)}
   </div>`;
 }
 
+/* ── Dashboard ── */
 function renderDashboard(){
-  const p=profile(), s=stats(), d=daysUntil(p.examDate), daily=dailyAnswered();
+  const p=profile(),s=stats(),d=daysUntil(p.examDate),daily=dailyAnswered();
   const goalPct=Math.min(100,Math.round((daily/(p.dailyGoal||1))*100));
   const weak=weakestTopicIds();
   const curWeek=load("currentWeek",1);
-  const weekData=LYQA_WEEKS.find(w=>w.week===curWeek)||LYQA_WEEKS[0];
-  const wChecked=load("weekChecked_"+curWeek,{});
-  const wAll=[...(weekData.mathFund||[]).map((_,i)=>"mathFund_"+i),...(weekData.practicalMath||[]).map((_,i)=>"practicalMath_"+i),...(weekData.language||[]).map((_,i)=>"language_"+i),...(weekData.logic||[]).map((_,i)=>"logic_"+i)];
-  const wDone=wAll.filter(k=>wChecked[k]).length;
+  const wd=LYQA_WEEKS.find(w=>w.week===curWeek)||LYQA_WEEKS[0];
+  const wChk=load("weekChecked_"+curWeek,{});
+  const wAll=[...(wd.mathFund||[]).map((_,i)=>"mathFund_"+i),...(wd.practicalMath||[]).map((_,i)=>"practicalMath_"+i),...(wd.language||[]).map((_,i)=>"language_"+i),...(wd.logic||[]).map((_,i)=>"logic_"+i)];
+  const wDone=wAll.filter(k=>wChk[k]).length;
   const weekPct=wAll.length?Math.round(wDone/wAll.length*100):0;
   const examLabel=p.examType==="professional"?"Professional":"SubProfessional";
   app.innerHTML=`<div class="v32Dashboard">
     <div class="v32WelcomeCard">
-      <span class="pill premium-pill" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.18)">${examLabel} Mode</span>
+      <span class="pill" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);border-color:rgba(255,255,255,.18);font-size:11px">✦ ${examLabel} Mode</span>
       <h2>${p.name?`Welcome back, ${h(p.name)}.`:"Ready to review?"}</h2>
-      <p>${p.reminderText?h(p.reminderText):"Your organized space for CSE — notes, drills, formulas, and mocks aligned with Team Lyqa's 10-week guide."}</p>
+      <p>${p.reminderText?h(p.reminderText):"Your space for focused CSE prep — notes, drills, formulas, and full mocks aligned with Team Lyqa's 10-week guide."}</p>
       <div class="v32DashActions">
         <button class="v32DashBtn primary" onclick="recommendedStart()">▶ Start Drill</button>
         <button class="v32DashBtn outline" onclick="startFullMock('${p.examType}')">📝 Full Mock</button>
@@ -1597,57 +1610,78 @@ function renderDashboard(){
       <div class="v32Stat"><span>Answered</span><strong>${s.answered||0}</strong></div>
       <div class="v32Stat"><span>Accuracy</span><strong>${accuracy()}%</strong></div>
       <div class="v32Stat"><span>Today</span><strong>${daily}<span style="font-size:14px;color:var(--muted)">/${p.dailyGoal}</span></strong></div>
-      <div class="v32Stat"><span>${d===null?"Exam Date":"Days Left"}</span><strong>${d===null?"—":d>=0?d+"d":"Update"}</strong></div>
+      <div class="v32Stat"><span>${d===null?"Exam":"Days Left"}</span><strong>${d===null?"Set":d>=0?d+"d":"—"}</strong></div>
     </div>
-    ${card(`<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">Daily Progress</h3><span class="small muted">${daily} / ${p.dailyGoal} questions</span></div><div class="progressBarLite"><div style="width:${goalPct}%"></div></div><div class="streakRow" style="margin-top:14px">${streakDays().map(x=>`<div class="streakDot ${x.done?"done":""}">${x.label}</div>`).join("")}</div>`)}
+    ${card(`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h3 style="margin:0">Daily Progress</h3><span class="small muted">${daily} / ${p.dailyGoal} questions today</span></div><div class="progressBarLite" style="margin-bottom:14px"><div style="width:${goalPct}%"></div></div><div class="streakRow">${streakDays().map(x=>`<div class="streakDot ${x.done?'done':''}">${x.label}</div>`).join("")}</div>`)}
     <div class="v32WeekBox">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div><span class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em">This Week</span><h3 style="margin:4px 0 0;font-size:16px">Week ${curWeek}: ${h(weekData.title||"")}</h3></div>
-        <button class="btn secondary" onclick="setTab('plan')" style="min-height:38px;padding:8px 16px;font-size:13px">View Plan →</button>
+        <div>
+          <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--gold)">This Week</div>
+          <h3 style="margin:3px 0 0;font-size:16px">Week ${curWeek}: ${h(wd.title)}</h3>
+        </div>
+        <button class="btn secondary" onclick="setTab('plan')" style="min-height:36px;padding:8px 16px;font-size:13px">View Plan →</button>
       </div>
-      <div style="margin:12px 0 8px"><div class="weekProgressBar"><div style="width:${weekPct}%"></div></div></div>
-      <div class="v32WeekTopics">${[...(weekData.mathFund||[]).slice(0,3),...(weekData.language||[]).slice(0,2)].map(t=>`<span class="v32WeekTopic">${h(t)}</span>`).join("")}<span class="v32WeekTopic" style="opacity:.6">${wDone}/${wAll.length} done</span></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${(weekData.drillTopics||[]).slice(0,3).map(tid=>{const t=topicById(tid);return `<button class="btn secondary" style="min-height:36px;padding:7px 12px;font-size:12px" onclick="startTopicDrill('${tid}')">Drill: ${t.name.replace(" Ability","")}</button>`;}).join("")}</div>
+      <div style="margin:12px 0 10px"><div class="weekProgressBar"><div style="width:${weekPct}%"></div></div></div>
+      <div class="v32WeekTopics">${[...(wd.mathFund||[]).slice(0,3),...(wd.language||[]).slice(0,2)].map(t=>`<span class="v32WeekTopic">${h(t)}</span>`).join("")}<span class="v32WeekTopic" style="opacity:.55;border-style:dashed">${wDone}/${wAll.length} done</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${(wd.drillTopics||[]).slice(0,3).map(tid=>{const t=topicById(tid);return`<button class="btn secondary" style="min-height:34px;padding:6px 12px;font-size:12px" onclick="startTopicDrill('${tid}')">Drill: ${t.name.replace(" Ability","")}</button>`;}).join("")}</div>
     </div>
-    ${weak.length?card(`<h3>Suggested Focus</h3><p class="muted" style="margin-top:0">Based on your practice history.</p><div class="grid3">${weak.map(id=>{const t=topicById(id);return `<button class="topicBtn" onclick="startTopicDrill('${id}')"><div class="topicRow"><div class="topicIcon" style="background:${t.color}">${t.icon}</div><div><div class="topicName">${t.name}</div><div class="small muted">${topicAccuracy(id)}% accuracy</div></div></div></button>`;}).join("")}</div>`):""}
+    ${weak.length?card(`<h3>Suggested Focus</h3><p class="muted" style="margin:0 0 12px">Based on your accuracy so far.</p><div class="grid3">${weak.map(id=>{const t=topicById(id);const acc=topicAccuracy(id);return`<button class="topicBtn" onclick="startTopicDrill('${id}')"><div class="topicRow"><div class="topicIcon" style="background:${t.color}">${t.icon}</div><div><div class="topicName">${t.name}</div><div class="small muted">${acc}% accuracy</div></div></div></button>`;}).join("")}</div>`):""}
     <div class="grid2">
-      ${card(`<h3>Quick Drills</h3><div class="drillTileGrid">
+      ${card(`<h3>Quick Drills</h3><div class="drillTileGrid" style="margin-top:10px">
         <button class="drillTile" onclick="startMathVariantDrill()"><span class="drillIcon">🔢</span><b>Math Variant</b><small>Dynamic numbers</small></button>
-        <button class="drillTile" onclick="startGrammarDrill()"><span class="drillIcon">📖</span><b>Grammar</b><small>30 items</small></button>
-        <button class="drillTile" onclick="startFilipinoDrill()"><span class="drillIcon">🇵🇭</span><b>Filipino</b><small>30 items</small></button>
-        <button class="drillTile" onclick="startLogicDrill()"><span class="drillIcon">🧠</span><b>Logic</b><small>30 items</small></button>
-        <button class="drillTile" onclick="startLawDrill()"><span class="drillIcon">🏛️</span><b>Law / CSC</b><small>30 items</small></button>
+        <button class="drillTile" onclick="startGrammarDrill()"><span class="drillIcon">📖</span><b>Grammar</b><small>Verbal</small></button>
+        <button class="drillTile" onclick="startFilipinoDrill()"><span class="drillIcon">🇵🇭</span><b>Filipino</b><small>Filipino</small></button>
+        <button class="drillTile" onclick="startLogicDrill()"><span class="drillIcon">🧠</span><b>Logic</b><small>Analytical</small></button>
+        <button class="drillTile" onclick="startLawDrill()"><span class="drillIcon">🏛️</span><b>Law / CSC</b><small>General Info</small></button>
         <button class="drillTile" onclick="startQuickSprint()"><span class="drillIcon">⚡</span><b>Sprint 10</b><small>Quick warm-up</small></button>
       </div>`)}
-      ${card(`<h3>Full Mock Exams</h3>
-        <div class="grid2" style="margin-bottom:12px">
-          <div class="kpi"><span>Professional</span><strong>170</strong></div>
-          <div class="kpi"><span>SubProfessional</span><strong>165</strong></div>
+      ${card(`<h3>Mock Exams</h3>
+        <div class="kpiGrid" style="margin:10px 0 14px">
+          <div class="kpi" style="padding:12px"><span>Professional</span><strong>170</strong></div>
+          <div class="kpi" style="padding:12px"><span>SubProfessional</span><strong>165</strong></div>
+          <div class="kpi" style="padding:12px"><span>EDQ Items</span><strong>25</strong></div>
+          <div class="kpi" style="padding:12px"><span>Questions</span><strong>${QUESTIONS.length}</strong></div>
         </div>
-        <p class="muted" style="font-size:13px">Full simulation with timer and score breakdown including EDQ.</p>
         <div style="display:grid;gap:8px">
-          <button class="btn full" onclick="startFullMock('professional')">📝 Professional Full Mock</button>
-          <button class="btn full secondary" onclick="startFullMock('subprofessional')">🗂️ SubProfessional Full Mock</button>
-          <button class="btn full secondary" onclick="startDiagnostic()">🔍 Diagnostic (45 items)</button>
+          <button class="btn full" onclick="startFullMock('professional')">📝 Professional Full Mock (170 items)</button>
+          <button class="btn full secondary" onclick="startFullMock('subprofessional')">🗂️ SubProfessional Full Mock (165 items)</button>
+          <button class="btn full secondary" onclick="startDiagnostic()">🔍 Diagnostic Test (45 items)</button>
         </div>`)}
     </div>
     ${card(DEDICATION_FOOTER,"dedicationFooter small muted")}
   </div>`;
 }
 
+/* ── Activities ── */
 function renderActivities(){
   if(state.quizStarted) return renderQuiz();
   const p=profile();
   app.innerHTML=`<div class="section">
-  ${card(`<h2>📝 Mock Exams</h2><p class="muted">Full simulations with timer and score breakdown. Current setting: <b>${p.examType==="professional"?"Professional":"SubProfessional"}</b>.</p>
-    <div class="v32ActivityGrid">
-      <div class="v32ActivityCard"><h3>📝 Professional</h3><p>170-item simulation: 20 EDQ + 150 scored items. Timer: 3h 10m.</p><button class="btn full" onclick="startFullMock('professional')">Start Professional Mock</button></div>
-      <div class="v32ActivityCard"><h3>🗂️ SubProfessional</h3><p>165-item simulation: 20 EDQ + 145 scored items. Timer: 2h 40m.</p><button class="btn full" onclick="startFullMock('subprofessional')">Start SubProfessional Mock</button></div>
+  ${card(`<h2>📝 Mock Exams</h2>
+    <p class="muted">Full-length timed simulations. Includes EDQ and all topic sections. Score breakdown after each exam.</p>
+    <div class="v32ActivityGrid" style="margin-top:14px">
+      <div class="v32ActivityCard">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:28px">📝</span>
+          <div><h3 style="margin:0">Professional</h3><div class="small muted">170 items · Timer: 3h 10m</div></div>
+        </div>
+        <p>20 EDQ + 150 scored items across all Civil Service topic areas. Best for CS Professional Exam practice.</p>
+        <button class="btn full" onclick="startFullMock('professional')">Start Professional Full Mock</button>
+      </div>
+      <div class="v32ActivityCard">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:28px">🗂️</span>
+          <div><h3 style="margin:0">SubProfessional</h3><div class="small muted">165 items · Timer: 2h 40m</div></div>
+        </div>
+        <p>20 EDQ + 145 scored items. Slightly narrower coverage. Best for CS SubProfessional Exam practice.</p>
+        <button class="btn full" onclick="startFullMock('subprofessional')">Start SubProfessional Full Mock</button>
+      </div>
     </div>`)}
-  ${card(`<h2>🎯 Focused Drills</h2><p class="muted">Targeted practice by topic or skill area.</p>
+  ${card(`<h2>🎯 Focused Drills</h2>
+    <p class="muted" style="margin-bottom:14px">Targeted practice by subject area. Each drill pulls from the full question bank.</p>
     <div class="drillTileGrid">
       <button class="drillTile" onclick="startMathDrill()"><span class="drillIcon">🧮</span><b>Math Drill</b><small>30 items</small></button>
-      <button class="drillTile" onclick="startMathVariantDrill()"><span class="drillIcon">🔢</span><b>Math Variant</b><small>Dynamic numbers</small></button>
+      <button class="drillTile" onclick="startMathVariantDrill()"><span class="drillIcon">🔢</span><b>Math Variant</b><small>New numbers each time</small></button>
       <button class="drillTile" onclick="startGrammarDrill()"><span class="drillIcon">📖</span><b>Grammar</b><small>30 items</small></button>
       <button class="drillTile" onclick="startFilipinoDrill()"><span class="drillIcon">🇵🇭</span><b>Filipino</b><small>30 items</small></button>
       <button class="drillTile" onclick="startLawDrill()"><span class="drillIcon">🏛️</span><b>Constitution / Law</b><small>30 items</small></button>
@@ -1656,41 +1690,77 @@ function renderActivities(){
       <button class="drillTile" onclick="startReadingDrill()"><span class="drillIcon">📰</span><b>Reading / Para</b><small>25 items</small></button>
       <button class="drillTile" onclick="startGraphicDrill()"><span class="drillIcon">📊</span><b>Graphic / Data</b><small>25 items</small></button>
     </div>`)}
-  ${card(`<h2>⚡ Activity Hub</h2><div class="v32ActivityGrid">
-    <div class="v32ActivityCard"><h3>⚡ Quick Sprint 10</h3><p>10 questions, 10-minute timer. Great for a warm-up.</p><button class="btn full secondary" onclick="startQuickSprint()">Start Sprint</button></div>
-    <div class="v32ActivityCard"><h3>🔍 Diagnostic 45</h3><p>5 questions per topic to find weak spots.</p><button class="btn full secondary" onclick="startDiagnostic()">Start Diagnostic</button></div>
-    <div class="v32ActivityCard"><h3>📄 Caselet Drill</h3><p>Passage-based questions with supporting data.</p><button class="btn full secondary" onclick="startCaseletDrill()">Start Caselet Drill</button></div>
-    <div class="v32ActivityCard"><h3>🎯 Weak Spot Practice</h3><p>Re-answer questions you got wrong before.</p><button class="btn full secondary" onclick="startWeakQuiz()">Practice Weak Spots</button></div>
-  </div>`)}
-  ${card(`<h2>🎯 Section Drill</h2><p class="muted">Pick one topic and answer 20 focused questions.</p><div class="selectRow"><select onchange="state.sectionTopic=this.value">${TOPICS.map(t=>`<option value="${t.id}" ${state.sectionTopic===t.id?"selected":""}>${t.icon} ${t.name} (${topicCount(t.id)})</option>`).join("")}</select><button class="btn" onclick="startSectionDrill()">Start Section Drill</button></div>`)}
+  ${card(`<h2>⚡ Activity Hub</h2>
+    <div class="v32ActivityGrid" style="margin-top:12px">
+      <div class="v32ActivityCard"><h3>⚡ Quick Sprint</h3><p>10 questions in 10 minutes. A fast warm-up before a longer session.</p><button class="btn full secondary" onclick="startQuickSprint()">Start Sprint</button></div>
+      <div class="v32ActivityCard"><h3>🔍 Diagnostic</h3><p>5 questions per topic. Identifies your weak spots across all areas fast.</p><button class="btn full secondary" onclick="startDiagnostic()">Start Diagnostic</button></div>
+      <div class="v32ActivityCard"><h3>📄 Caselet Drill</h3><p>Passage-based questions with supporting tables or scenarios.</p><button class="btn full secondary" onclick="startCaseletDrill()">Start Caselet Drill</button></div>
+      <div class="v32ActivityCard"><h3>🎯 Weak Spot</h3><p>Re-answers every question you've previously gotten wrong.</p><button class="btn full secondary" onclick="startWeakQuiz()">Practice Weak Spots</button></div>
+    </div>`)}
+  ${card(`<h2>🎯 Section Drill</h2>
+    <p class="muted">Choose one topic and answer 20 focused questions.</p>
+    <div class="selectRow" style="margin-top:12px">
+      <select onchange="state.sectionTopic=this.value">${TOPICS.map(t=>`<option value="${t.id}" ${state.sectionTopic===t.id?"selected":""}>${t.icon} ${t.name} (${topicCount(t.id)} items)</option>`).join("")}</select>
+      <button class="btn" onclick="startSectionDrill()">Start Section Drill</button>
+    </div>`)}
   </div>`;
 }
 
+/* ── Exam type toggle ── */
 function toggleExamType(){
-  const p=profile();
-  const newType=p.examType==="professional"?"subprofessional":"professional";
+  const p=profile(),newType=p.examType==="professional"?"subprofessional":"professional";
   saveProfile({examType:newType});
   const btn=document.getElementById("examTypeBtn");
-  if(btn) btn.textContent=newType==="professional"?"PRO":"SUB";
-  if(state.tab==="dashboard") renderDashboard();
+  if(btn)btn.textContent=newType==="professional"?"PRO":"SUB";
+  if(state.tab==="dashboard")renderDashboard();
 }
 
-/* Export all new globals */
-window.renderStudyPlan=renderStudyPlan;
-window.renderDashboard=renderDashboard;
-window.renderActivities=renderActivities;
+/* ── Export globals ── */
+window.render=render;window.renderTabs=renderTabs;window.setTab=setTab;
+window.renderStudyPlan=renderStudyPlan;window.renderDashboard=renderDashboard;
+window.renderActivities=renderActivities;window.toggleExamType=toggleExamType;
 window.toggleWeekItem=toggleWeekItem;
-window.toggleExamType=toggleExamType;
-window.LYQA_WEEKS=LYQA_WEEKS;
+window.saveUserNote=saveUserNote;window.saveTopicPref=saveTopicPref;
+window.toggleShortcuts=toggleShortcuts;window.toggleExplanations=toggleExplanations;
+window.toggleCompactMode=toggleCompactMode;window.quitActivity=quitActivity;
+window.startFocusedDrill=startFocusedDrill;window.startMathVariantDrill=startMathVariantDrill;
+window.startMathDrill=startMathDrill;window.startGrammarDrill=startGrammarDrill;
+window.startFilipinoDrill=startFilipinoDrill;window.startLawDrill=startLawDrill;
+window.startLogicDrill=startLogicDrill;window.startClericalDrill=startClericalDrill;
+window.startReadingDrill=startReadingDrill;window.saveLibraryField=saveLibraryField;
+window.toggleLibraryCheck=toggleLibraryCheck;window.markTopicReviewed=markTopicReviewed;
+window.startSubtopicDrill=startSubtopicDrill;window.exportTopicNotes=exportTopicNotes;
+window.copyTopicNotes=copyTopicNotes;window.insertNoteTemplate=insertNoteTemplate;
+window.clearNoteField=clearNoteField;window.startSubtopicDrillEncoded=startSubtopicDrillEncoded;
+window.renderLibrary=renderLibrary;window.toggleAllTopics=toggleAllTopics;
+window.toggleTopic=toggleTopic;window.startPractice=startPractice;
+window.startFullMock=startFullMock;window.startQuickSprint=startQuickSprint;
+window.startDiagnostic=startDiagnostic;window.startGraphicDrill=startGraphicDrill;
+window.startCaseletDrill=startCaseletDrill;window.startSectionDrill=startSectionDrill;
+window.startTopicDrill=startTopicDrill;window.recommendedStart=recommendedStart;
+window.chooseAnswer=chooseAnswer;window.nextQuestion=nextQuestion;
+window.resetQuizState=resetQuizState;window.reviewResults=reviewResults;
+window.renderFinished=renderFinished;window.startWeakQuiz=startWeakQuiz;
+window.clearWeak=clearWeak;window.renderFormulas=renderFormulas;
+window.renderSettings=renderSettings;window.saveSettings=saveSettings;
+window.resetProfileOnly=resetProfileOnly;window.resetAllProgress=resetAllProgress;
+window.exportProgress=exportProgress;window.state=state;
 
-/* Wire up exam type button */
-(function(){
-  const btn=document.getElementById("examTypeBtn");
-  if(btn){
-    try{btn.textContent=profile().examType==="professional"?"PRO":"SUB";}catch(e){btn.textContent="PRO";}
-    btn.onclick=toggleExamType;
-  }
-})();
-
-/* Final render — called once, after all functions are defined */
+/* ── Theme setup + init ── */
+const themeBtn=document.getElementById("themeBtn");
+const savedTheme=localStorage.getItem("theme")||"light";
+document.documentElement.dataset.theme=savedTheme;
+if(profile().compactMode===true)document.body.classList.add("compactStudy");
+themeBtn.textContent=savedTheme==="dark"?"☀️":"🌙";
+themeBtn.onclick=()=>{
+  const next=document.documentElement.dataset.theme==="dark"?"light":"dark";
+  document.documentElement.dataset.theme=next;
+  localStorage.setItem("theme",next);
+  themeBtn.textContent=next==="dark"?"☀️":"🌙";
+};
+const examBtn=document.getElementById("examTypeBtn");
+if(examBtn){
+  try{examBtn.textContent=profile().examType==="professional"?"PRO":"SUB";}catch(e){examBtn.textContent="PRO";}
+  examBtn.onclick=toggleExamType;
+}
 render();

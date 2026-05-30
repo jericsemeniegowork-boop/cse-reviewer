@@ -1,21 +1,21 @@
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CSE Review Studio v32 — Team Lyqa Aligned</title>
-<meta name="description" content="Mobile-friendly Civil Service Exam reviewer with notes, formulas, drills, mocks, progress tracking, and Team Lyqa 10-week study guide." />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSE Review Studio — Team Lyqa 2025</title>
+<meta name="description" content="Civil Service Exam reviewer with notes, formulas, drills, mocks, progress tracking, and Team Lyqa 10-week study guide."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 <header>
   <div class="topbar">
     <div class="brand">
       <div class="logo"><span>CSE</span></div>
-      <div><h1>CSE Review Studio</h1><p>Team Lyqa Aligned · v32</p></div>
+      <div><h1>CSE Review Studio</h1><p>Team Lyqa 2025 Aligned</p></div>
     </div>
     <div class="headerRight">
       <button class="iconBtn examToggleBtn" id="examTypeBtn" title="Toggle exam type">PRO</button>
@@ -25,18 +25,18 @@
   <nav class="desktopTabs" id="desktopTabs"></nav>
 </header>
 <main class="wrap">
-  <section class="hero" id="heroSection">
+  <section class="hero">
     <div class="heroInner">
       <div>
-        <span class="pill premium-pill">Team Lyqa 2025 · 10-Week Guide Aligned</span>
-        <h2>Your organized space for focused CSE preparation.</h2>
-        <p>Drills, mocks, formula cards, mistake logs, and a weekly study guide based on Team Lyqa's 2025 Review Outline.</p>
+        <span class="pill gold premium-pill">Team Lyqa 2025 · 10-Week Guide Aligned</span>
+        <h2>Your complete space for focused CSE preparation.</h2>
+        <p>Drills, full mock exams, formula lessons, mistake logs, study notes, and a 10-week review guide built around Team Lyqa's 2025 outline.</p>
       </div>
       <div class="heroGrid">
-        <div class="heroStat"><strong>1169+</strong><span>scored questions</span></div>
-        <div class="heroStat"><strong>10</strong><span>study weeks</span></div>
-        <div class="heroStat"><strong>170</strong><span>Pro mock length</span></div>
-        <div class="heroStat"><strong>165</strong><span>SubPro mock length</span></div>
+        <div class="heroStat"><strong id="heroQCount">1169+</strong><span>Questions</span></div>
+        <div class="heroStat"><strong>10</strong><span>Study Weeks</span></div>
+        <div class="heroStat"><strong>170</strong><span>Pro Mock</span></div>
+        <div class="heroStat"><strong>165</strong><span>SubPro Mock</span></div>
       </div>
     </div>
   </section>
@@ -45,6 +45,13 @@
 <nav class="mobileNav" id="mobileTabs"></nav>
 <script src="data.js"></script>
 <script src="questions-patch.js"></script>
+<script>
+  // Update hero question count after data loads
+  document.addEventListener('DOMContentLoaded',()=>{
+    const el=document.getElementById('heroQCount');
+    if(el&&window.CSE_DATA&&window.CSE_DATA.questions) el.textContent=window.CSE_DATA.questions.length+'+';
+  });
+</script>
 <script src="app.js"></script>
 </body>
 </html>
